@@ -1,0 +1,9 @@
+/*
+!/buildSrc
+!/engine
+!/sample
+!/wrapper
+!.gitignore
+!build.gradle.kts
+!settings.gradle.kts
+!README.md
