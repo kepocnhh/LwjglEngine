@@ -28,4 +28,5 @@ fun size(
 }
 
 fun square(size: Double) = size(width = size, height = size)
+fun square(size: Int) = square(size = size.toDouble())
 val sizeEmpty = size(0, 0)

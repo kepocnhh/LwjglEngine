@@ -7,6 +7,7 @@ import lwjgl.engine.common.input.EngineInputCallback
 import lwjgl.engine.common.input.EngineInputState
 import lwjgl.engine.common.input.FunctionKey
 import lwjgl.engine.common.input.PrintableKey
+import lwjgl.game.roguelike.engine.logic.RoguelikeEngineLogic
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.point
@@ -235,5 +236,6 @@ object JoystickEngineLogic : EngineLogic {
 fun main() {
     println("Hello LWJGL " + Version.getVersion() + "!")
 //    Engine.run(JoystickEngineLogic)
-    Engine.run(KeyboardEngineLogic)
+//    Engine.run(KeyboardEngineLogic)
+    Engine.run(RoguelikeEngineLogic)
 }
