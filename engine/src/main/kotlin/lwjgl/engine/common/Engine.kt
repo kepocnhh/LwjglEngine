@@ -5,19 +5,93 @@ import lwjgl.engine.common.input.FunctionKey
 import lwjgl.engine.common.input.PrintableKey
 import lwjgl.engine.common.input.toBufferIndex
 import lwjgl.engine.common.input.toFunctionKeyOrNull
-import lwjgl.engine.common.input.toJoystickIndexOrNull
 import lwjgl.engine.common.input.toPrintableKeyOrNull
 import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.util.glfw.glfwGetWindowSize
 import lwjgl.wrapper.util.glfw.key.KeyStatus
 import lwjgl.wrapper.util.glfw.key.toKeyStatusOrNull
-import lwjgl.wrapper.util.resource.ResourceProvider
 import lwjgl.wrapper.window.WindowSize
 import lwjgl.wrapper.window.closeWindow
 import lwjgl.wrapper.window.loopWindow
 import org.lwjgl.glfw.GLFW
-import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+
+private object MappingPS3 : EngineInputState.Joystick.Mapping {
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        type: EngineInputState.Joystick.Mapping.ValueType
+    ): Int? {
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 0
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 1
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> null
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 2
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 3
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> null
+            }
+        }
+    }
+
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        type: EngineInputState.Joystick.Mapping.BooleanType
+    ): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Interaction): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Directional): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Main): Int? {
+        TODO()
+    }
+}
+private object MappingPS4 : EngineInputState.Joystick.Mapping {
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        type: EngineInputState.Joystick.Mapping.ValueType
+    ): Int? {
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 0
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 1
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 3
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 2
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 5
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 4
+            }
+        }
+    }
+
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        type: EngineInputState.Joystick.Mapping.BooleanType
+    ): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Interaction): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Directional): Int? {
+        TODO()
+    }
+
+    override fun getBufferIndex(button: EngineInputState.Joystick.Button.Main): Int? {
+        TODO()
+    }
+}
 
 private class MutableEngineInputKeyboardState : EngineInputState.Keyboard {
     override val printableKeys: MutableMap<PrintableKey, KeyStatus> = mutableMapOf<PrintableKey, KeyStatus>().also {
@@ -73,7 +147,7 @@ private class MutableJoy(
 
 private class MutableEngineInputState: EngineInputState {
     override val keyboard: MutableEngineInputKeyboardState = MutableEngineInputKeyboardState()
-    override val joysticks: MutableMap<EngineInputState.JoystickIndex, MutableEngineInputJoystickState> = mutableMapOf()
+    override val joysticks: MutableList<MutableEngineInputJoystickState?> = MutableList(size = 2) { null }
 }
 
 private fun onKeyCallback(
@@ -97,21 +171,71 @@ private fun onKeyCallback(
 }
 
 private fun onJoysticks(
-    mutableJoysticks: MutableMap<EngineInputState.JoystickIndex, MutableEngineInputJoystickState>
+    joysticks: MutableList<MutableEngineInputJoystickState?>
 ) {
     val joystickId = GLFW.GLFW_JOYSTICK_1
-    onJoystick(joystickId, mutableJoysticks)
+    onJoystick(joystickId, joysticks)
     // todo
 }
 private fun onJoystick(
-    joystickId: Int,
-    mutableJoysticks: MutableMap<EngineInputState.JoystickIndex, MutableEngineInputJoystickState>
+    joystick: MutableEngineInputJoystickState,
+    mapping: EngineInputState.Joystick.Mapping,
+    buttons: ByteArray,
+    axes: FloatArray
 ) {
-    val joystickIndex = joystickId.toJoystickIndexOrNull() ?: return
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.LEFT,
+        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
+    )?.also {
+        joystick.joyLeft.x = axes[it].toDouble()
+    }
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.LEFT,
+        type = EngineInputState.Joystick.Mapping.ValueType.JOY_Y
+    )?.also {
+        joystick.joyLeft.y = axes[it].toDouble()
+    }
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
+        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
+    )?.also {
+        joystick.joyRight.x = axes[it].toDouble()
+    }
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
+        type = EngineInputState.Joystick.Mapping.ValueType.JOY_Y
+    )?.also {
+        joystick.joyRight.y = axes[it].toDouble()
+    }
+
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.LEFT,
+        type = EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION
+    )?.also {
+        joystick.triggerLeft.position = axes[it].toDouble()
+    }
+    mapping.getBufferIndex(
+        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
+        type = EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION
+    )?.also {
+        joystick.triggerRight.position = axes[it].toDouble()
+    }
+}
+private fun onJoystick(
+    joystickId: Int,
+    joysticks: MutableList<MutableEngineInputJoystickState?>
+) {
     val isJoystickPresent = GLFW.glfwJoystickPresent(joystickId)
     val joystickGUID = GLFW.glfwGetJoystickGUID(joystickId)
     val joystickName = GLFW.glfwGetJoystickName(joystickId)
     val gamepadName = GLFW.glfwGetGamepadName(joystickId)
+    val mapping = gamepadName?.let {
+        when {
+            it.contains("PS4") -> MappingPS4
+            it.contains("PS3") -> MappingPS3
+            else -> null
+        }
+    }
     val joystickButtons = GLFW.glfwGetJoystickButtons(joystickId)?.let {
         val array = ByteArray(it.remaining())
         it.get(array)
@@ -126,29 +250,36 @@ private fun onJoystick(
         joystickGUID == null ||
         joystickName == null ||
         joystickButtons == null ||
-        joystickAxes == null) {
-        mutableJoysticks.remove(joystickIndex)
+        joystickAxes == null ||
+        mapping == null) {
+        joysticks[joystickId] = null
         return
     }
-    val mutableJoystick = mutableJoysticks[joystickIndex]?.let {
+    val mutableJoystick = joysticks[joystickId]?.let {
         when (it.id) {
             joystickGUID -> it
             else -> null
         }
     } ?: MutableEngineInputJoystickState(id = joystickGUID, name = joystickName).also {
-        println("$joystickIndex id: $joystickGUID name: $joystickName / $gamepadName")
-        mutableJoysticks[joystickIndex] = it
+        println("joystick #$joystickId id: $joystickGUID name: $joystickName / $gamepadName")
+        joysticks[joystickId] = it
     }
 //    println("buttons: ${joystickButtons.mapIndexed { index, byte -> "$index:$byte"}.toList()}")
 //    println("axes: ${joystickAxes.toList()}")
-    mutableJoystick.joyLeft.x = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_LEFT_X].toDouble()
-    mutableJoystick.joyLeft.y = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y].toDouble()
+//    mapping.getBufferIndex(
+//        side = EngineInputState.Joystick.Mapping.Side.LEFT,
+//        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
+//    )?.also {
+//        mutableJoystick.joyLeft.x = joystickAxes[it].toDouble()
+//    }
+    onJoystick(
+        joystick = mutableJoystick,
+        mapping = mapping,
+        buttons = joystickButtons,
+        axes = joystickAxes
+    )
     mutableJoystick.joyLeft.isPressed = joystickButtons[8].toInt() == 1
-    mutableJoystick.joyRight.x = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X].toDouble()
-    mutableJoystick.joyRight.y = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y].toDouble()
     mutableJoystick.joyRight.isPressed = joystickButtons[9].toInt() == 1
-    mutableJoystick.triggerLeft.position = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER].toDouble()
-    mutableJoystick.triggerRight.position = joystickAxes[GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER].toDouble()
     mutableJoystick.button.bumperLeft = joystickButtons[GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER].toInt() == 1
     mutableJoystick.button.bumperRight = joystickButtons[GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER].toInt() == 1
     EngineInputState.Joystick.Button.Interaction.values().forEach {
@@ -167,8 +298,8 @@ object Engine {
     fun run(logic: EngineLogic) {
         val isWindowClosed = AtomicBoolean(false)
         val mutableEngineInputState = MutableEngineInputState()
-        var timeLogicLast = 0L
-        var timeRenderLast = 0L
+        var timeLogicLast = 0.0
+        var timeRenderLast = 0.0
         loopWindow(
             windowSize = WindowSize.Exact(size = size(width = 640, height = 480)),
             title = "Engine",
@@ -194,25 +325,26 @@ object Engine {
                 // todo
             },
             onRender = { windowId, canvas ->
-                val timeNowLogic = System.nanoTime()
+                val timeNowLogic = System.nanoTime().toDouble()
                 onJoysticks(mutableEngineInputState.joysticks)
+                val pictureSize = glfwGetWindowSize(windowId)
                 logic.onUpdateState(
                     engineInputState = mutableEngineInputState,
                     engineProperty = engineProperty(
                         timeLast = timeLogicLast,
                         timeNow = timeNowLogic,
-                        pictureSize = glfwGetWindowSize(windowId)
+                        pictureSize = pictureSize
                     )
                 )
                 timeLogicLast = timeNowLogic
-                val timeNowRender = System.nanoTime()
+                val timeNowRender = System.nanoTime().toDouble()
                 logic.onRender(
                     canvas,
                     engineInputState = mutableEngineInputState,
                     engineProperty = engineProperty(
                         timeLast = timeRenderLast,
                         timeNow = timeNowRender,
-                        pictureSize = glfwGetWindowSize(windowId)
+                        pictureSize = pictureSize
                     )
                 )
                 timeRenderLast = timeNowRender

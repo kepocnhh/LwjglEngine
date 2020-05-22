@@ -14,6 +14,7 @@ import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.util.glfw.key.KeyStatus
 import lwjgl.wrapper.util.resource.ResourceProvider
 import org.lwjgl.Version
+import org.lwjgl.glfw.GLFW
 import java.util.concurrent.TimeUnit
 
 object KeyboardEngineLogic : EngineLogic {
@@ -151,7 +152,7 @@ object JoystickEngineLogic : EngineLogic {
             text = "${(fps*100).toInt().toDouble()/100}",
             fontHeight = 16f
         )
-        val joystick = engineInputState.joysticks[EngineInputState.JoystickIndex.JOYSTICK_1]
+        val joystick = engineInputState.joysticks[GLFW.GLFW_JOYSTICK_1]
         if(joystick != null) {
             EngineInputState.Joystick.Button.Interaction.values().forEach {
                 val isPressed = joystick.button.interaction[it] ?: false

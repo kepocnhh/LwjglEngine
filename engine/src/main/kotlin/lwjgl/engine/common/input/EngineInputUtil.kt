@@ -44,13 +44,6 @@ fun Int.toFunctionKeyOrNull(): FunctionKey? {
     }
 }
 
-fun Int.toJoystickIndexOrNull(): EngineInputState.JoystickIndex? {
-    return when (this) {
-        GLFW.GLFW_JOYSTICK_1 -> EngineInputState.JoystickIndex.JOYSTICK_1
-        else -> null
-    }
-}
-
 fun EngineInputState.Joystick.Button.Interaction.toBufferIndex(): Int {
     return when (this) {
         EngineInputState.Joystick.Button.Interaction.A -> GLFW.GLFW_GAMEPAD_BUTTON_A

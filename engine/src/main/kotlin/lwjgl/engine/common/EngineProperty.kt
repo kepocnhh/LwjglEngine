@@ -3,20 +3,20 @@ package lwjgl.engine.common
 import lwjgl.wrapper.entity.Size
 
 interface EngineProperty {
-    val timeLast: Long
-    val timeNow: Long
+    val timeLast: Double
+    val timeNow: Double
     val pictureSize: Size
 }
 
 private data class EnginePropertyImpl(
-    override val timeLast: Long,
-    override val timeNow: Long,
+    override val timeLast: Double,
+    override val timeNow: Double,
     override val pictureSize: Size
 ) : EngineProperty
 
 fun engineProperty(
-    timeLast: Long,
-    timeNow: Long,
+    timeLast: Double,
+    timeNow: Double,
     pictureSize: Size
 ) : EngineProperty {
     return EnginePropertyImpl(

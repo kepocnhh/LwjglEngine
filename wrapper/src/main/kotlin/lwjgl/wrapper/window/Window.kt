@@ -8,7 +8,9 @@ import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.fontRender
 import lwjgl.wrapper.entity.point
+import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.util.glfw.glfwCreateWindow
+import lwjgl.wrapper.util.glfw.glfwGetMonitorSize
 import lwjgl.wrapper.util.glfw.glfwGetWindowSize
 import lwjgl.wrapper.util.glfw.glfwSetWindowPos
 import lwjgl.wrapper.util.glfw.key.glfwKeyCallback
@@ -59,32 +61,23 @@ fun createWindow(
     val monitorId = monitorIdSupplier()
     if(monitorId == MemoryUtil.NULL) error("Failed to create the GLFW window")
     println("create window | monitor id: $monitorId")
-    val videoMode = GLFW.glfwGetVideoMode(monitorId) ?: error("Failed to get video mode by monitor: $monitorId")
+    val monitorSize = glfwGetMonitorSize(monitorId)
+    println("create window | monitor id: $monitorId $monitorSize")
 
     val windowId: Long
     when(windowSize) {
         WindowSize.FullScreen -> {
-//            windowId = GLFW.glfwCreateWindow(
-//                videoMode.width(),
-//                videoMode.height(),
-//                title,
-//                monitorId,
-//                MemoryUtil.NULL
-//            )
             GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, false.toGLFWInt())
-            windowId = GLFW.glfwCreateWindow(
-                videoMode.width(),
-                videoMode.height(),
-                title,
-                MemoryUtil.NULL,
-                MemoryUtil.NULL
+            windowId = glfwCreateWindow(
+                size = monitorSize,
+                title = title
             )
         }
         is WindowSize.Exact -> {
             windowId = glfwCreateWindow(windowSize.size, title)
 
-            val xPosition = (videoMode.width() - windowSize.size.width) / 2
-            val yPosition = (videoMode.height()- windowSize.size.height)/ 2
+            val xPosition = (monitorSize.width - windowSize.size.width) / 2
+            val yPosition = (monitorSize.height- windowSize.size.height)/ 2
             glfwSetWindowPos(
                 windowId,
                 xPosition = xPosition.toInt(),

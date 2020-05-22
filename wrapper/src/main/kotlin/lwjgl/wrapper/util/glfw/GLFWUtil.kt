@@ -4,6 +4,7 @@ import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.util.io.use
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFWVidMode
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryStack.stackPush
 import org.lwjgl.system.MemoryUtil
@@ -15,7 +16,15 @@ fun glfwGetWindowSize(windowId: Long, stack: MemoryStack): Size {
     val widthBuffer = stack.mallocInt(1)
     val heightBuffer = stack.mallocInt(1)
     GLFW.glfwGetWindowSize(windowId, widthBuffer, heightBuffer)
-    return size(widthBuffer[0], heightBuffer[0])
+    return size(width = widthBuffer[0], height = heightBuffer[0])
+}
+
+fun glfwGetVideoMode(monitorId: Long): GLFWVidMode {
+    return GLFW.glfwGetVideoMode(monitorId) ?: error("Failed to get video mode by monitor: $monitorId")
+}
+fun glfwGetMonitorSize(monitorId: Long): Size {
+    val videoMode = glfwGetVideoMode(monitorId)
+    return size(width = videoMode.width(), height = videoMode.height())
 }
 
 fun glfwGetMonitorContentScale(monitorId: Long) = stackPush().use {

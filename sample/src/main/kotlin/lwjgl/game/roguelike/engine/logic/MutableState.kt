@@ -3,14 +3,23 @@ package lwjgl.game.roguelike.engine.logic
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.entity.Point
 
-class MutablePoint(
+data class MutablePoint(
     override var x: Double,
     override var y: Double
-) : Point
+) : Point {
+    override fun toString(): String {
+        val dX = String.format("%.1f", x)
+        val dY = String.format("%.1f", y)
+        return "{x:$dX,y:$dY}"
+    }
+}
 
 class MutableStateJourneyPlayer(
     override val position: MutablePoint
-) : State.Journey.Player
+) : State.Journey.Player {
+//    override val velocity: Double = 1.0
+    override val velocity: Double = 5.0
+}
 
 class MutableStateJourney : State.Journey {
     override val player: MutableStateJourneyPlayer = MutableStateJourneyPlayer(
