@@ -8,7 +8,6 @@ import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.fontRender
 import lwjgl.wrapper.entity.point
-import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.util.glfw.glfwCreateWindow
 import lwjgl.wrapper.util.glfw.glfwGetMonitorSize
 import lwjgl.wrapper.util.glfw.glfwGetWindowSize
@@ -24,6 +23,7 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.system.MemoryUtil
 import java.io.PrintStream
+import kotlin.math.sqrt
 
 private val windows = mutableMapOf<Long, WindowStatus>()
 
@@ -226,6 +226,13 @@ fun loopWindow(
 private class WindowCanvas(
     private val fontRender: FontRender
 ): Canvas {
+    override fun drawPoint(color: Color, point: Point) {
+        glColorOf(color)
+        glTransaction(GL11.GL_POINTS) {
+            glVertexOf(point)
+        }
+    }
+
     override fun drawLine(
         color: Color,
         point1: Point,
@@ -255,6 +262,64 @@ private class WindowCanvas(
             glVertexOf(pointBottomRight)
             glVertexOf(pointTopLeft.x, pointBottomRight.y)
         }
+    }
+
+    override fun drawRectangle(
+        color: Color,
+        pointTopLeft: Point,
+        size: Size,
+        direction: Double,
+        pointOfRotation: Point
+    ) = glTransactionMatrix {
+        val xR = pointOfRotation.x
+        val yR = pointOfRotation.y
+        GL11.glTranslated(xR, yR, 0.0)
+        GL11.glRotated(direction, 0.0, 0.0, 1.0)
+        val xP = pointTopLeft.x
+        val yP = pointTopLeft.y
+        drawRectangle(color, point(
+//            x = xP - xR - size.width / 2,
+//            y = yP - yR - size.height / 2
+            x = xP - xR,
+            y = yP - yR
+        ), size)
+    }
+    private fun drawRectangle1(
+        color: Color,
+        pointTopLeft: Point,
+        size: Size,
+        direction: Double,
+        pointOfRotation: Point
+    ) = glTransactionMatrix {
+//        GL11.glTranslated(pointTopLeft.x, pointTopLeft.y, 0.0)
+        GL11.glTranslated(pointOfRotation.x, pointOfRotation.y, 0.0)
+//        GL11.glTranslated(pointOfRotation.x - pointTopLeft.x, pointOfRotation.y - pointTopLeft.y, 0.0)
+//        GL11.glTranslated(pointTopLeft.x + size.width / 2, pointTopLeft.y + size.height / 2, 0.0)
+        GL11.glRotated(direction, 0.0, 0.0, 1.0)
+//        GL11.glTranslated(0.0, 0.0, 0.0)
+//        GL11.glRotated(direction, pointTopLeft.x + size.width/2, pointTopLeft.y + size.height/2, 1.0)
+//        GL11.glRotated(direction, 0.5, 0.5, 1.0)
+//        glColorOf(color)
+//        GL11.glRotated(direction, pointTopLeft.x, pointTopLeft.y, 1.0)
+//        drawRectangle(color, pointTopLeft, size)
+//        drawRectangle(color, point(0, 0), size)
+//        val x = sqrt(size.width * size.width + size.height * size.height) / 2
+//        drawRectangle(color, point(x, 0.0), size)
+//        drawRectangle(color, point(size.width, size.height), size)
+//        drawRectangle(color, point(x = - size.width / 2, y = - size.height / 2), size)
+//        drawRectangle(color, point(
+//            x = pointTopLeft.x - size.width / 2,
+//            y = pointTopLeft.y - size.height / 2
+//        ), size)
+//        drawRectangle(color, point(
+//            x = pointOfRotation.x - pointTopLeft.x - size.width / 2,
+//            y = pointOfRotation.y - pointTopLeft.y - size.height / 2
+//        ), size)
+        drawRectangle(color, point(
+            x = pointOfRotation.x - pointTopLeft.x - size.width / 2,
+            y = - size.height / 2
+        ), size)
+//        GL11.glRectd(pointTopLeft.x, pointTopLeft.y, pointTopLeft.x + size.width, pointTopLeft.y + size.height)
     }
 
     override fun drawText(

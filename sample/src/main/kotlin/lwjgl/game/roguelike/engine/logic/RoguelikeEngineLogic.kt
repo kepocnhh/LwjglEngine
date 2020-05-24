@@ -11,6 +11,7 @@ import lwjgl.game.roguelike.util.TimeUnit
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.point
+import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.entity.square
 import lwjgl.wrapper.util.glfw.key.KeyStatus
 import lwjgl.wrapper.util.resource.ResourceProvider
@@ -63,7 +64,8 @@ object RoguelikeEngineLogic : EngineLogic {
             time = engineProperty.timeNow - engineProperty.timeLast,
             timeUnit = TimeUnit.SECONDS
         )
-        val joystick = engineInputState.joysticks[GLFW.GLFW_JOYSTICK_1]
+        val joystick = engineInputState.joysticks[GLFW.GLFW_JOYSTICK_1] ?: engineInputState.joysticks[GLFW.GLFW_JOYSTICK_2]
+        val playerPositionOld = mutableState.journey.player.position.copy()
         if (joystick == null) {
             val printableKeys = engineInputState.keyboard.printableKeys
             var dX = 0.0
@@ -149,24 +151,58 @@ object RoguelikeEngineLogic : EngineLogic {
                 mutableState.journey.player.position.y += dP * dY
             }
         }
+        val direction: Double
+        val playerPositionNew = mutableState.journey.player.position
+        direction = Math.toDegrees(
+            Math.atan2(
+                playerPositionOld.x - playerPositionNew.x,
+                playerPositionOld.y - playerPositionNew.y
+            )
+        ) * -1
+        mutableState.journey.player.direction = direction
         // todo
     }
 
     override fun onRender(canvas: Canvas, engineInputState: EngineInputState, engineProperty: EngineProperty) {
         val dTime = engineProperty.timeNow - engineProperty.timeLast
-        val framesPerSecond = TimeUnit.SECONDS.convert(1.0, TimeUnit.NANOSECONDS) / dTime
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(0, 0),
-            text = String.format("%.1f", framesPerSecond),
-            fontHeight = 16f
-        )
         val state: State = mutableState
+        //
+//        val playerSize = square(size = 50)
+        val playerSize = size(width = 75, height = 50)
+        val playerPosition = point(
+            x = state.journey.player.position.x - playerSize.width / 2,
+            y = state.journey.player.position.y - playerSize.height /2
+        )
+        val pointOfRotation = state.journey.player.position
         canvas.drawRectangle(
             color = ColorEntity.RED,
-            pointTopLeft = state.journey.player.position,
-            size = square(size = 10)
+            pointTopLeft = playerPosition,
+            size = playerSize,
+            direction = state.journey.player.direction,
+            pointOfRotation = pointOfRotation
+        )
+        val directionSize = size(15, 25)
+        canvas.drawRectangle(
+            color = ColorEntity.GREEN,
+            pointTopLeft = point(
+                x = state.journey.player.position.x - directionSize.width/2,
+                y = playerPosition.y - directionSize.height/2
+            ),
+            size = directionSize,
+            direction = state.journey.player.direction,
+            pointOfRotation = pointOfRotation
+        )
+        canvas.drawPoint(
+            color = ColorEntity.YELLOW,
+            point = point(x = state.journey.player.position.x, y = playerPosition.y)
+        )
+        canvas.drawPoint(
+            color = ColorEntity.WHITE,
+            point = playerPosition
+        )
+        canvas.drawPoint(
+            color = ColorEntity.GREEN,
+            point = state.journey.player.position
         )
         canvas.drawText(
             fullPathFont = fullPathFont,
@@ -175,6 +211,21 @@ object RoguelikeEngineLogic : EngineLogic {
             text = state.journey.player.position.toString(),
             fontHeight = 16f
         )
+        canvas.drawText(
+            fullPathFont = fullPathFont,
+            color = ColorEntity.GREEN,
+            pointTopLeft = point(x = 50, y = 75),
+            text = String.format("%.1f", state.journey.player.direction),
+            fontHeight = 16f
+        )
         // todo
+        val framesPerSecond = TimeUnit.SECONDS.convert(1.0, TimeUnit.NANOSECONDS) / dTime
+        canvas.drawText(
+            fullPathFont = fullPathFont,
+            color = ColorEntity.GREEN,
+            pointTopLeft = point(engineProperty.pictureSize.width - 50, engineProperty.pictureSize.height - 50),
+            text = String.format("%.1f", framesPerSecond),
+            fontHeight = 16f
+        )
     }
 }

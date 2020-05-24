@@ -16,6 +16,7 @@ interface State {
         interface Player {
             val position: Point
             val velocity: Double // unit per second
+            val direction: Double // 0..359
         }
 
         val player: Player

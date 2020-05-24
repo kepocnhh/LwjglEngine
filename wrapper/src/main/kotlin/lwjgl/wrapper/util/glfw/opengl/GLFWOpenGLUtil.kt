@@ -6,6 +6,12 @@ import lwjgl.wrapper.entity.Size
 import org.lwjgl.opengl.GL11
 import java.nio.ByteBuffer
 
+fun glTransactionMatrix(action: () -> Unit) {
+    GL11.glPushMatrix()
+    action()
+    GL11.glPopMatrix()
+}
+
 fun glTransaction(mode: Int, action: () -> Unit) {
     GL11.glBegin(mode)
     action()

@@ -173,8 +173,12 @@ private fun onKeyCallback(
 private fun onJoysticks(
     joysticks: MutableList<MutableEngineInputJoystickState?>
 ) {
-    val joystickId = GLFW.GLFW_JOYSTICK_1
-    onJoystick(joystickId, joysticks)
+    setOf(
+        GLFW.GLFW_JOYSTICK_1,
+        GLFW.GLFW_JOYSTICK_2
+    ).forEach {
+        onJoystick(joystickId = it, joysticks = joysticks)
+    }
     // todo
 }
 private fun onJoystick(

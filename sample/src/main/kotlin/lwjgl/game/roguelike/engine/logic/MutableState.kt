@@ -19,6 +19,7 @@ class MutableStateJourneyPlayer(
 ) : State.Journey.Player {
 //    override val velocity: Double = 1.0
     override val velocity: Double = 5.0
+    override var direction: Double = 0.0
 }
 
 class MutableStateJourney : State.Journey {
