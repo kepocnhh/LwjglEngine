@@ -202,8 +202,9 @@ object JoystickEngineLogic : EngineLogic {
             ).forEachIndexed { index, joy ->
                 canvas.drawLine(
                     color = ColorEntity.GREEN,
-                    point1 = point(x = 50 + 200 * index, y = 250),
-                    point2 = point(x = 50 + 200 * index + joy.x * 50, y = 250 + joy.y * 50)
+                    pointStart = point(x = 50 + 200 * index, y = 250),
+                    pointFinish = point(x = 50 + 200 * index + joy.x * 50, y = 250 + joy.y * 50),
+                    lineWidth = 1f
                 )
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,
@@ -219,8 +220,9 @@ object JoystickEngineLogic : EngineLogic {
             ).forEachIndexed { index, trigger ->
                 canvas.drawLine(
                     color = ColorEntity.GREEN,
-                    point1 = point(x = 50 + 200 * index, y = 300),
-                    point2 = point(x = 50 + 200 * index, y = (300 + (trigger.position + 1) * 25).toInt())
+                    pointStart = point(x = 50 + 200 * index, y = 300),
+                    pointFinish = point(x = 50 + 200 * index, y = (300 + (trigger.position + 1) * 25).toInt()),
+                    lineWidth = 1f
                 )
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,

@@ -235,15 +235,42 @@ private class WindowCanvas(
 
     override fun drawLine(
         color: Color,
-        point1: Point,
-        point2: Point
+        pointStart: Point,
+        pointFinish: Point,
+        lineWidth: Float
     ) {
-        GL11.glLineWidth(1.0f)
+        GL11.glLineWidth(lineWidth)
         glColorOf(color)
         glTransaction(GL11.GL_LINE_STRIP) {
-            glVertexOf(point1)
-            glVertexOf(point2)
+            glVertexOf(pointStart)
+            glVertexOf(pointFinish)
         }
+    }
+
+    override fun drawLine(
+        color: Color,
+        pointStart: Point,
+        pointFinish: Point,
+        lineWidth: Float,
+        direction: Double,
+        pointOfRotation: Point
+    ) = glTransactionMatrix {
+        val xR = pointOfRotation.x
+        val yR = pointOfRotation.y
+        GL11.glTranslated(xR, yR, 0.0)
+        GL11.glRotated(direction, 0.0, 0.0, 1.0)
+        drawLine(
+            color,
+            pointStart = point(
+                x = pointStart.x - xR,
+                y = pointStart.y - yR
+            ),
+            pointFinish = point(
+                x = pointFinish.x - xR,
+                y = pointFinish.y - yR
+            ),
+            lineWidth = lineWidth
+        )
     }
 
     override fun drawRectangle(

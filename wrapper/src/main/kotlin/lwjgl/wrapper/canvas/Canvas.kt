@@ -6,7 +6,20 @@ import lwjgl.wrapper.entity.Size
 
 interface Canvas {
     fun drawPoint(color: Color, point: Point)
-    fun drawLine(color: Color, point1: Point, point2: Point)
+    fun drawLine(
+        color: Color,
+        pointStart: Point,
+        pointFinish: Point,
+        lineWidth: Float
+    )
+    fun drawLine(
+        color: Color,
+        pointStart: Point,
+        pointFinish: Point,
+        lineWidth: Float,
+        direction: Double,
+        pointOfRotation: Point
+    )
     fun drawRectangle(color: Color, pointTopLeft: Point, size: Size)
     fun drawRectangle(
         color: Color,
