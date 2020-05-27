@@ -15,6 +15,7 @@ import lwjgl.wrapper.util.resource.ResourceProvider
 import org.lwjgl.glfw.GLFW
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.sqrt
 
 object RoguelikeEngineLogic : EngineLogic {
@@ -57,31 +58,54 @@ object RoguelikeEngineLogic : EngineLogic {
         // todo
     }
 
-    private fun onUpdateStatePlayerPositionHorizontal(dX: Double) {
-        onUpdateStatePlayerPosition(dX = dX, dY = 0.0)
+    private fun onUpdateStatePlayerPositionHorizontal(dTime: Double, dX: Double) {
+        onUpdateStatePlayerPosition(dTime = dTime, dX = dX, dY = 0.0)
     }
-    private fun onUpdateStatePlayerPositionVertical(dY: Double) {
-        onUpdateStatePlayerPosition(dX = 0.0, dY = dY)
+    private fun onUpdateStatePlayerPositionVertical(dTime: Double, dY: Double) {
+        onUpdateStatePlayerPosition(dTime = dTime, dX = 0.0, dY = dY)
+    }
+    private fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
+        val angle = atan2(y = oldX - newX, x = oldY - newY)
+        val degrees = angle * -180.0 / kotlin.math.PI
+        return degrees + ceil(-degrees / 360.0) * 360.0
     }
     private fun onUpdateStatePlayerPosition(
+        dTime: Double,
         dX: Double,
         dY: Double
     ) {
-        val (oldX, oldY) = mutableState.journey.player.position.copy()
-        val (newX, newY) = mutableState.journey.player.position.also {
+        val player = mutableState.journey.player
+        val (oldX, oldY) = player.position
+        val (newX, newY) = player.position.also {
             it.x += dX
             it.y += dY
         }
-        val direction = Math.toDegrees(
-            atan2(y = oldX - newX, x = oldY - newY)
-        ) * -1
-        mutableState.journey.player.direction = direction
-    }
-    private fun calculateTime(engineProperty: EngineProperty): Double {
-        return TimeUnit.NANOSECONDS.convert(
-            time = engineProperty.timeNow - engineProperty.timeLast,
-            timeUnit = TimeUnit.SECONDS
-        )
+        val directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = newX, newY = newY)
+        val directionOld = player.direction
+        if (directionOld != directionExpected) {
+//            println("directionExpected: $directionExpected")
+//            val directionNew = directionExpected
+            val directionVelocity = 180.0 / TimeUnit.NANO_IN_SECOND
+            val difference = (directionOld - directionExpected).let {
+                when {
+                    it > 180.0 -> it - 360.0
+                    it < -180.0-> it + 360.0
+                    else -> it
+                }
+            }
+//            println("difference: $difference")
+            val d = directionVelocity * dTime
+            if (d > difference.absoluteValue) {
+                player.direction = directionExpected
+            } else {
+                val directionNew = if (difference < 0) {
+                    directionOld + d
+                } else {
+                    directionOld - d
+                }
+                player.direction = directionNew
+            }
+        }
     }
     private fun onUpdateStatePlayerPositionKeyboard(
         keyboard: EngineInputState.Keyboard,
@@ -99,47 +123,55 @@ object RoguelikeEngineLogic : EngineLogic {
                 !isLeft && !isRight && !isTop && !isBottom -> return
             isLeft && isRight && isTop && !isBottom || !isLeft && !isRight && isTop && !isBottom -> { // only /\
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
-                onUpdateStatePlayerPositionVertical(dY = - units * pixelsPerUnit)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
+                onUpdateStatePlayerPositionVertical(dTime = dTime, dY = - units * pixelsPerUnit)
             }
             isLeft && isRight && !isTop && isBottom || !isLeft && !isRight && !isTop && isBottom -> { // only \/
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
-                onUpdateStatePlayerPositionVertical(dY = units * pixelsPerUnit)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
+                onUpdateStatePlayerPositionVertical(dTime = dTime, dY = units * pixelsPerUnit)
             }
             isLeft && !isRight && isTop && !isBottom -> { // </\
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val result = units * pixelsPerUnit / sqrt(2.0)
-                onUpdateStatePlayerPosition(dX = - result, dY = - result)
+                onUpdateStatePlayerPosition(dTime = dTime, dX = - result, dY = - result)
             }
             isLeft && !isRight && !isTop && isBottom -> { // <\/
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val result = units * pixelsPerUnit / sqrt(2.0)
-                onUpdateStatePlayerPosition(dX = - result, dY = result)
+                onUpdateStatePlayerPosition(dTime = dTime, dX = - result, dY = result)
             }
             isLeft && !isRight && !isTop && !isBottom || isLeft && !isRight && isTop && isBottom -> { // only <
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
-                onUpdateStatePlayerPositionHorizontal(dX = - units * pixelsPerUnit)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
+                onUpdateStatePlayerPositionHorizontal(dTime = dTime, dX = - units * pixelsPerUnit)
             }
             !isLeft && isRight && isTop && !isBottom -> { // /\>
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val result = units * pixelsPerUnit / sqrt(2.0)
-                onUpdateStatePlayerPosition(dX = result, dY = - result)
+                onUpdateStatePlayerPosition(dTime = dTime, dX = result, dY = - result)
             }
             !isLeft && isRight && !isTop && isBottom -> { // \/>
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val result = units * pixelsPerUnit / sqrt(2.0)
-                onUpdateStatePlayerPosition(dX = result, dY = result)
+                onUpdateStatePlayerPosition(dTime = dTime, dX = result, dY = result)
             }
             !isLeft && isRight && !isTop && !isBottom || !isLeft && isRight && isTop && isBottom -> { // only >
                 val velocityMultiple = 1.0
-                val units = mutableState.journey.player.velocity * velocityMultiple * calculateTime(engineProperty)
-                onUpdateStatePlayerPositionHorizontal(dX = units * pixelsPerUnit)
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
+                onUpdateStatePlayerPositionHorizontal(dTime = dTime, dX = units * pixelsPerUnit)
             }
         }
     }
@@ -155,17 +187,17 @@ object RoguelikeEngineLogic : EngineLogic {
             joyLeftX.absoluteValue < min && joyLeftY.absoluteValue < min -> return
             joyLeftX.absoluteValue < min -> {
                 val velocityMultiple = sqrt(joyLeftY * joyLeftY)
-                val time = calculateTime(engineProperty)
-                val units = mutableState.journey.player.velocity * velocityMultiple * time
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val dP = units * pixelsPerUnit
-                onUpdateStatePlayerPositionVertical(dY = dP * joyLeftY)
+                onUpdateStatePlayerPositionVertical(dTime = dTime, dY = dP * joyLeftY)
             }
             joyLeftY.absoluteValue < min -> {
                 val velocityMultiple = sqrt(joyLeftX * joyLeftX)
-                val time = calculateTime(engineProperty)
-                val units = mutableState.journey.player.velocity * velocityMultiple * time
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val dP = units * pixelsPerUnit
-                onUpdateStatePlayerPositionHorizontal(dX = dP * joyLeftX)
+                onUpdateStatePlayerPositionHorizontal(dTime = dTime, dX = dP * joyLeftX)
             }
             else -> {
                 val dX: Double
@@ -189,10 +221,10 @@ object RoguelikeEngineLogic : EngineLogic {
                     }
                 }
                 val velocityMultiple = sqrt(dX * dX + dY * dY)
-                val time = calculateTime(engineProperty)
-                val units = mutableState.journey.player.velocity * velocityMultiple * time
+                val dTime = engineProperty.timeNow - engineProperty.timeLast
+                val units = mutableState.journey.player.velocity * velocityMultiple * dTime
                 val dP = units * pixelsPerUnit
-                onUpdateStatePlayerPosition(dX = dP * dX, dY = dP * dY)
+                onUpdateStatePlayerPosition(dTime = dTime, dX = dP * dX, dY = dP * dY)
             }
         }
     }
@@ -287,7 +319,7 @@ object RoguelikeEngineLogic : EngineLogic {
         //
         onRender(canvas, engineInputState, engineProperty, player = state.journey.player)
         // todo
-        val framesPerSecond = TimeUnit.SECONDS.convert(1.0, TimeUnit.NANOSECONDS) / dTime
+        val framesPerSecond = 1_000_000_000.0 / dTime
         canvas.drawText(
             fullPathFont = fullPathFont,
             color = ColorEntity.GREEN,

@@ -15,7 +15,7 @@ interface State {
     interface Journey {
         interface Player {
             val position: Point
-            val velocity: Double // unit per second
+            val velocity: Double // unit per nanosecond
             val direction: Double // 0..359
         }
 
