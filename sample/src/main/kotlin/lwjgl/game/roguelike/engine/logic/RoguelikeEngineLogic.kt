@@ -52,10 +52,13 @@ object RoguelikeEngineLogic : EngineLogic {
         }
     }
 
-    private const val pixelsPerUnit = 10.0 // todo
+    private const val pixelsPerUnit = 25.0 // todo
 
     override fun onPreLoop() {
         // todo
+        mutableState.journey.player.position.x = playerSize.width / 2
+        mutableState.journey.player.position.y = playerSize.height / 2
+        mutableState.journey.player.direction = 135.0
     }
 
     private fun onUpdateStatePlayerPositionHorizontal(dTime: Double, dX: Double) {
@@ -69,6 +72,7 @@ object RoguelikeEngineLogic : EngineLogic {
         val degrees = angle * -180.0 / kotlin.math.PI
         return degrees + ceil(-degrees / 360.0) * 360.0
     }
+    private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
         dX: Double,
@@ -76,9 +80,29 @@ object RoguelikeEngineLogic : EngineLogic {
     ) {
         val player = mutableState.journey.player
         val (oldX, oldY) = player.position
-        val (newX, newY) = player.position.also {
-            it.x += dX
-            it.y += dY
+        val newX = oldX + dX
+        val newY = oldY + dY
+        val territory = mutableState.journey.territory
+        val pW = playerSize.width / 2
+        val pH = playerSize.height / 2
+        val isMoveX = newX in pW..(territory.size.width * pixelsPerUnit - pW) &&
+            !territory.regions.any {
+                val rX = it.position.x * pixelsPerUnit
+                val rY = it.position.y * pixelsPerUnit
+                newX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW) &&
+                    oldY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH)
+            }
+        val isMoveY = newY in pH..(territory.size.height* pixelsPerUnit - pH) &&
+            !territory.regions.any {
+                val rX = it.position.x * pixelsPerUnit
+                val rY = it.position.y * pixelsPerUnit
+                newY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH) &&
+                    oldX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW)
+            }
+//        if (!isMoveX && !isMoveY) return
+        player.position.also {
+            it.x = if (isMoveX) newX else oldX
+            it.y = if (isMoveY) newY else oldY
         }
         val directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = newX, newY = newY)
         val directionOld = player.direction
@@ -246,6 +270,72 @@ object RoguelikeEngineLogic : EngineLogic {
 
     private fun onRender(
         canvas: Canvas,
+        center: Point,
+        player: State.Journey.Player
+    ) {
+        val playerPosition = point(
+            x = center.x - playerSize.width / 2,
+            y = center.y - playerSize.height /2
+        )
+        canvas.drawRectangle(
+            color = ColorEntity.RED,
+            pointTopLeft = playerPosition,
+            size = playerSize,
+            direction = player.direction,
+            pointOfRotation = center
+        )
+        canvas.drawLine(
+            color = ColorEntity.RED,
+            pointStart = center,
+            pointFinish = point(
+                x = center.x,
+                y = playerPosition.y
+            ),
+            lineWidth = 1f,
+            direction = player.direction,
+            pointOfRotation = center
+        )
+        canvas.drawPoint(
+            color = ColorEntity.WHITE,
+            point = playerPosition
+        )
+        canvas.drawPoint(
+            color = ColorEntity.GREEN,
+            point = center
+        )
+    }
+    private fun onRender(
+        canvas: Canvas,
+        engineProperty: EngineProperty,
+        journey: State.Journey
+    ) {
+        val center = point(x = engineProperty.pictureSize.width / 2, y = engineProperty.pictureSize.height / 2)
+        canvas.drawRectangle(
+            color = ColorEntity.WHITE,
+            pointTopLeft = point(
+                x = center.x - journey.player.position.x,
+                y = center.y - journey.player.position.y
+            ),
+            size = size(width = journey.territory.size.width * pixelsPerUnit, height = journey.territory.size.height * pixelsPerUnit)
+        )
+        journey.territory.regions.forEach { region ->
+            canvas.drawRectangle(
+                color = region.color,
+                pointTopLeft = point(
+                    x = center.x + region.position.x * pixelsPerUnit - journey.player.position.x,
+                    y = center.y + region.position.y * pixelsPerUnit - journey.player.position.y
+                ),
+                size = size(width = region.size.width * pixelsPerUnit, height = region.size.height * pixelsPerUnit)
+            )
+        }
+        onRender(
+            canvas = canvas,
+            center = center,
+            player = journey.player
+        )
+    }
+    private fun onRenderDeprecated(
+        canvas: Canvas,
         engineInputState: EngineInputState,
         engineProperty: EngineProperty,
         player: State.Journey.Player
@@ -314,12 +404,11 @@ object RoguelikeEngineLogic : EngineLogic {
         )
     }
     override fun onRender(canvas: Canvas, engineInputState: EngineInputState, engineProperty: EngineProperty) {
-        val dTime = engineProperty.timeNow - engineProperty.timeLast
         val state: State = mutableState
         //
-        onRender(canvas, engineInputState, engineProperty, player = state.journey.player)
+        onRender(canvas, engineProperty = engineProperty, journey = state.journey)
         // todo
-        val framesPerSecond = 1_000_000_000.0 / dTime
+        val framesPerSecond = TimeUnit.NANO_IN_SECOND / (engineProperty.timeNow - engineProperty.timeLast)
         canvas.drawText(
             fullPathFont = fullPathFont,
             color = ColorEntity.GREEN,

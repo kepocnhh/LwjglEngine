@@ -1,6 +1,8 @@
 package lwjgl.game.roguelike.state
 
+import lwjgl.wrapper.entity.Color
 import lwjgl.wrapper.entity.Point
+import lwjgl.wrapper.entity.Size
 
 interface State {
     val shouldEngineStop: Boolean
@@ -18,7 +20,20 @@ interface State {
             val velocity: Double // unit per nanosecond
             val direction: Double // 0..359
         }
+        interface Territory {
+            val size: Size
+
+            interface Region {
+                val position: Point
+                val size: Size
+                val color: Color
+                val isPassable: Boolean
+            }
+
+            val regions: List<Region>
+        }
 
         val player: Player
+        val territory: Territory
     }
 }
