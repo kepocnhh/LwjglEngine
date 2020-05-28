@@ -55,7 +55,8 @@ object RoguelikeEngineLogic : EngineLogic {
         // todo
         mutableState.journey.player.position.x = playerSize.width / 2
         mutableState.journey.player.position.y = playerSize.height / 2
-        mutableState.journey.player.direction = 135.0
+        mutableState.journey.player.directionActual = 135.0
+        mutableState.journey.player.directionExpected = 135.0
     }
 
     private fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
@@ -73,40 +74,16 @@ object RoguelikeEngineLogic : EngineLogic {
         val player = mutableState.journey.player
         val (oldX, oldY) = player.position
         //
-        val directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = oldX + dX, newY = oldY + dY)
-        val directionOld = player.direction
-        if (directionOld != directionExpected) {
-            val directionVelocity = 360.0 / TimeUnit.NANO_IN_SECOND
-            val difference = (directionOld - directionExpected).let {
-                when {
-                    it > 180.0 -> it - 360.0
-                    it <-180.0 -> it + 360.0
-                    else -> it
-                }
-            }
-            val d = directionVelocity * dTime
-            if (d > difference.absoluteValue) {
-                player.direction = directionExpected
-            } else {
-                val directionNew = if (difference < 0) {
-                    directionOld + d
-                } else {
-                    directionOld - d
-                }
-                player.direction = directionNew
-            }
-        }
+        player.directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = oldX + dX, newY = oldY + dY)
         //
-        val territory = mutableState.journey.territory
-        val pW = playerSize.width / 2
-        val pH = playerSize.height / 2
         val units = mutableState.journey.player.velocity * velocityMultiple * dTime
         val result = units * pixelsPerUnit
-        val radians = Math.toRadians(directionExpected)
+        val radians = Math.toRadians(player.directionExpected)
         val newX = oldX + result * sin(radians)
         val newY = oldY - result * cos(radians)
-//        val isMoveX = true
-//        val isMoveY = true
+        val pW = playerSize.width / 2
+        val pH = playerSize.height / 2
+        val territory = mutableState.journey.territory
         val isMoveX = newX in pW..(territory.size.width * pixelsPerUnit - pW) &&
             !territory.regions.any {
                 val rX = it.position.x * pixelsPerUnit
@@ -188,15 +165,11 @@ object RoguelikeEngineLogic : EngineLogic {
                     }
                     joyLeftX.absoluteValue < joyLeftY.absoluteValue -> {
                         dX = joyLeftX
-                        dY = sqrt(1 - dX * dX) * joyLeftY.let {
-                            if (it < 0) -1 else 1
-                        }
+                        dY = sqrt(1 - dX * dX) * if (joyLeftY < 0) -1 else 1
                     }
                     else -> {
                         dY = joyLeftY
-                        dX = sqrt(1 - dY * dY) * joyLeftX.let {
-                            if (it < 0) -1 else 1
-                        }
+                        dX = sqrt(1 - dY * dY) * if (joyLeftX < 0) -1 else 1
                     }
                 }
                 val velocityMultiple = sqrt(dX * dX + dY * dY)
@@ -218,6 +191,29 @@ object RoguelikeEngineLogic : EngineLogic {
                 joystick = joystick
             )
         }
+        //
+        val directionActual = mutableState.journey.player.directionActual
+        val directionExpected = mutableState.journey.player.directionExpected
+        if (directionActual != directionExpected) {
+            val directionVelocity = 360.0 / TimeUnit.NANO_IN_SECOND
+            val difference = (directionActual - directionExpected).let {
+                when {
+                    it > 180.0 -> it - 360.0
+                    it <-180.0 -> it + 360.0
+                    else -> it
+                }
+            }
+            val d = directionVelocity * dTime
+            if (d > difference.absoluteValue) {
+                mutableState.journey.player.directionActual = directionExpected
+            } else {
+                if (difference < 0) {
+                    mutableState.journey.player.directionActual += d
+                } else {
+                    mutableState.journey.player.directionActual -= d
+                }
+            }
+        }
         // todo
     }
 
@@ -234,7 +230,7 @@ object RoguelikeEngineLogic : EngineLogic {
             color = ColorEntity.RED,
             pointTopLeft = playerPosition,
             size = playerSize,
-            direction = player.direction,
+            direction = player.directionActual,
             pointOfRotation = center
         )
         canvas.drawLine(
@@ -245,7 +241,7 @@ object RoguelikeEngineLogic : EngineLogic {
                 y = playerPosition.y
             ),
             lineWidth = 1f,
-            direction = player.direction,
+            direction = player.directionActual,
             pointOfRotation = center
         )
         canvas.drawPoint(
@@ -267,7 +263,7 @@ object RoguelikeEngineLogic : EngineLogic {
             fullPathFont = fullPathFont,
             color = ColorEntity.GREEN,
             pointTopLeft = point(0,25),
-            text = String.format("%.1f", player.direction),
+            text = String.format("%.1f", player.directionActual),
             fontHeight = 16f
         )
     }
@@ -299,75 +295,6 @@ object RoguelikeEngineLogic : EngineLogic {
             canvas = canvas,
             center = center,
             player = journey.player
-        )
-    }
-    private fun onRenderDeprecated(
-        canvas: Canvas,
-        engineInputState: EngineInputState,
-        engineProperty: EngineProperty,
-        player: State.Journey.Player
-    ) {
-//        val playerSize = square(size = 50)
-        val playerSize = size(width = 25, height = 25)
-        val playerPosition = point(
-            x = player.position.x - playerSize.width / 2,
-            y = player.position.y - playerSize.height /2
-        )
-        val pointOfRotation = player.position
-        canvas.drawRectangle(
-            color = ColorEntity.RED,
-            pointTopLeft = playerPosition,
-            size = playerSize,
-            direction = player.direction,
-            pointOfRotation = pointOfRotation
-        )
-        canvas.drawLine(
-            color = ColorEntity.GREEN,
-            pointStart = player.position,
-            pointFinish = point(
-                x = player.position.x,
-                y = playerPosition.y
-            ),
-            lineWidth = 1f,
-            direction = player.direction,
-            pointOfRotation = pointOfRotation
-        )
-//        val directionSize = size(15, 25)
-//        canvas.drawRectangle(
-//            color = ColorEntity.GREEN,
-//            pointTopLeft = point(
-//                x = player.position.x - directionSize.width/2,
-//                y = playerPosition.y - directionSize.height/2
-//            ),
-//            size = directionSize,
-//            direction = player.direction,
-//            pointOfRotation = pointOfRotation
-//        )
-//        canvas.drawPoint(
-//            color = ColorEntity.YELLOW,
-//            point = point(x = player.position.x, y = playerPosition.y)
-//        )
-        canvas.drawPoint(
-            color = ColorEntity.WHITE,
-            point = playerPosition
-        )
-        canvas.drawPoint(
-            color = ColorEntity.GREEN,
-            point = player.position
-        )
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(x = 50, y = 50),
-            text = player.position.toString(),
-            fontHeight = 16f
-        )
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(x = 50, y = 75),
-            text = String.format("%.1f", player.direction),
-            fontHeight = 16f
         )
     }
     override fun onRender(canvas: Canvas, engineInputState: EngineInputState, engineProperty: EngineProperty) {
