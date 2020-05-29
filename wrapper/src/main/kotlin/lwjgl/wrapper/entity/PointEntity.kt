@@ -5,10 +5,16 @@ interface Point {
     val y: Double
 }
 
-private data class PointImpl(
+private class PointImpl(
     override val x: Double,
     override val y: Double
-): Point
+): Point {
+    override fun toString(): String {
+        val fX = String.format("%.1f", x)
+        val fY = String.format("%.1f", y)
+        return "{x:$fX,y:$fY}"
+    }
+}
 
 fun point(
     x: Double,

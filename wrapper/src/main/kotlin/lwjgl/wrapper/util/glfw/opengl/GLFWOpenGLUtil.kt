@@ -24,11 +24,11 @@ fun glVertexOf(value1: Int, value2: Int) {
 fun glVertexOf(value1: Float, value2: Float) {
     GL11.glVertex2f(value1, value2)
 }
-fun glVertexOf(value1: Double, value2: Double) {
-    GL11.glVertex2d(value1, value2)
+fun glVertexOf(x: Double, y: Double) {
+    GL11.glVertex2d(x, y)
 }
 fun glVertexOf(point: Point) {
-    glVertexOf(point.x, point.y)
+    glVertexOf(x = point.x, y = point.y)
 }
 
 fun glColorOf(red: Float, green: Float, blue: Float, alpha: Float) {

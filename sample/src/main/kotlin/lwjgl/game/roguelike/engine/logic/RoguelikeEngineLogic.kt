@@ -12,8 +12,12 @@ import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.*
 import lwjgl.wrapper.util.glfw.key.KeyStatus
 import lwjgl.wrapper.util.resource.ResourceProvider
-import org.lwjgl.glfw.GLFW
-import kotlin.math.*
+import kotlin.math.atan2
+import kotlin.math.ceil
+import kotlin.math.sin
+import kotlin.math.cos
+import kotlin.math.sqrt
+import kotlin.math.absoluteValue
 
 object RoguelikeEngineLogic : EngineLogic {
     private val fullPathFont = ResourceProvider.requireResourceAsFile("font.main.ttf").absolutePath
@@ -53,10 +57,12 @@ object RoguelikeEngineLogic : EngineLogic {
 
     override fun onPreLoop() {
         // todo
-        mutableState.journey.player.position.x = playerSize.width / 2
-        mutableState.journey.player.position.y = playerSize.height / 2
-        mutableState.journey.player.directionActual = 135.0
-        mutableState.journey.player.directionExpected = 135.0
+        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
+        mutableState.journey.player.position.x = distanceMin
+        mutableState.journey.player.position.y = distanceMin
+        val direction = 135.0
+        mutableState.journey.player.directionActual = direction
+        mutableState.journey.player.directionExpected = direction
     }
 
     private fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
@@ -65,6 +71,66 @@ object RoguelikeEngineLogic : EngineLogic {
         return degrees + ceil(-degrees / 360.0) * 360.0
     }
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
+    private fun closerThan(
+        points: List<Point>,
+        x: Double,
+        y: Double,
+        distanceMin: Double
+    ): Boolean {
+        var i = 0
+        val size = points.size
+        while (true) {
+            val next: Int = when (i) {
+                size -> return false
+                size - 1 -> 0
+                else -> i + 1
+            }
+            val pointStart = points[i]
+            val pointFinish = points[next]
+            val distanceActual = calculateDistance(
+                pointStart = points[i],
+                pointFinish = points[next],
+                x = x,
+                y = y
+            )
+            if (distanceActual < distanceMin) {
+//                val fX = String.format("%.1f", x)
+//                val fY = String.format("%.1f", y)
+//                println("s:$pointStart,f:$pointFinish,g:{$fX,$fY},m:${String.format("%.1f", distanceMin)},d:${String.format("%.1f", distanceActual)}")
+                return true
+            }
+            i++
+        }
+    }
+    private fun calculateDistance(
+        pointStart: Point,
+        pointFinish: Point,
+        x: Double,
+        y: Double
+    ): Double {
+        val dY = pointFinish.y - pointStart.y
+        val dX = pointFinish.x - pointStart.x
+        val d = sqrt(dY * dY + dX * dX)
+        val dS = sqrt((pointStart.y - y) * (pointStart.y - y) + (pointStart.x - x) * (pointStart.x - x))
+        val dF = sqrt((pointFinish.y - y) * (pointFinish.y - y) + (pointFinish.x - x) * (pointFinish.x - x))
+        if (dF > d) return dS
+        if (dS > d) return dF
+        return (dY * x - dX * y + pointFinish.x * pointStart.y - pointFinish.y * pointStart.x).absoluteValue / d
+//        val c1 = sqrt(
+//            (pointStart.x - x) * (pointStart.x - x) +
+//            (pointStart.y - y) * (pointStart.y - y)
+//        )
+//        val c2 = sqrt(
+//            (pointFinish.x - x) * (pointFinish.x - x) +
+//            (pointFinish.y - y) * (pointFinish.y - y)
+//        )
+//        val a = sqrt(
+//            (pointStart.x - pointFinish.x) * (pointStart.x - pointFinish.x) +
+//            (pointStart.y - pointFinish.y) * (pointStart.y - pointFinish.y)
+//        )
+//        val tmp = (c1 * c1 - c2 * c2 + a * a) / (2 * a)
+//        return sqrt(c1 * c1 - tmp * tmp)
+    }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
         velocityMultiple: Double,
@@ -76,28 +142,57 @@ object RoguelikeEngineLogic : EngineLogic {
         //
         player.directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = oldX + dX, newY = oldY + dY)
         //
-        val units = mutableState.journey.player.velocity * velocityMultiple * dTime
+        val units = player.velocity * velocityMultiple * dTime
         val result = units * pixelsPerUnit
         val radians = Math.toRadians(player.directionExpected)
         val newX = oldX + result * sin(radians)
         val newY = oldY - result * cos(radians)
-        val pW = playerSize.width / 2
-        val pH = playerSize.height / 2
+//        val pW = playerSize.width / 2
+//        val pH = playerSize.height / 2
+        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
         val territory = mutableState.journey.territory
-        val isMoveX = newX in pW..(territory.size.width * pixelsPerUnit - pW) &&
-            !territory.regions.any {
-                val rX = it.position.x * pixelsPerUnit
-                val rY = it.position.y * pixelsPerUnit
-                newX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW) &&
-                    oldY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH)
-            }
-        val isMoveY = newY in pH..(territory.size.height* pixelsPerUnit - pH) &&
-            !territory.regions.any {
-                val rX = it.position.x * pixelsPerUnit
-                val rY = it.position.y * pixelsPerUnit
-                newY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH) &&
-                    oldX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW)
-            }
+//        val isMoveX = true
+//        val isMoveY = true
+        val isMoveX = newX in distanceMin..(territory.size.width * pixelsPerUnit - distanceMin) && !territory.regions.any { region ->
+            !region.isPassable && closerThan(
+                points = region.points.map {
+                    point(
+                        x = it.x * pixelsPerUnit,
+                        y = it.y * pixelsPerUnit
+                    )
+                },
+                x = newX,
+                y = oldY,
+                distanceMin = distanceMin
+            )
+        }
+        val isMoveY = newY in distanceMin..(territory.size.height * pixelsPerUnit - distanceMin) && !territory.regions.any { region ->
+            !region.isPassable && closerThan(
+                points = region.points.map {
+                    point(
+                        x = it.x * pixelsPerUnit,
+                        y = it.y * pixelsPerUnit
+                    )
+                },
+                x = oldX,
+                y = newY,
+                distanceMin = distanceMin
+            )
+        }
+//        val isMoveX = newX in pW..(territory.size.width * pixelsPerUnit - pW) &&
+//            !territory.regions.any {
+//                val rX = it.position.x * pixelsPerUnit
+//                val rY = it.position.y * pixelsPerUnit
+//                newX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW) &&
+//                    oldY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH)
+//            }
+//        val isMoveY = newY in pH..(territory.size.height* pixelsPerUnit - pH) &&
+//            !territory.regions.any {
+//                val rX = it.position.x * pixelsPerUnit
+//                val rY = it.position.y * pixelsPerUnit
+//                newY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH) &&
+//                    oldX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW)
+//            }
         if (isMoveX) {
             player.position.x = newX
         }
@@ -282,14 +377,24 @@ object RoguelikeEngineLogic : EngineLogic {
             size = size(width = journey.territory.size.width * pixelsPerUnit, height = journey.territory.size.height * pixelsPerUnit)
         )
         journey.territory.regions.forEach { region ->
-            canvas.drawRectangle(
+            canvas.drawLineLoop(
                 color = region.color,
-                pointTopLeft = point(
-                    x = center.x + region.position.x * pixelsPerUnit - journey.player.position.x,
-                    y = center.y + region.position.y * pixelsPerUnit - journey.player.position.y
-                ),
-                size = size(width = region.size.width * pixelsPerUnit, height = region.size.height * pixelsPerUnit)
+                points = region.points.map {
+                    point(
+                        x = center.x + it.x * pixelsPerUnit - journey.player.position.x,
+                        y = center.y + it.y * pixelsPerUnit - journey.player.position.y
+                    )
+                },
+                lineWidth = 1f
             )
+//            canvas.drawRectangle(
+//                color = region.color,
+//                pointTopLeft = point(
+//                    x = center.x + region.position.x * pixelsPerUnit - journey.player.position.x,
+//                    y = center.y + region.position.y * pixelsPerUnit - journey.player.position.y
+//                ),
+//                size = size(width = region.size.width * pixelsPerUnit, height = region.size.height * pixelsPerUnit)
+//            )
         }
         onRender(
             canvas = canvas,

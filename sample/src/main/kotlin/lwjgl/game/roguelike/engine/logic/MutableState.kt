@@ -17,9 +17,9 @@ class MutablePoint(
     operator fun component2(): Double = y
 
     override fun toString(): String {
-        val dX = String.format("%.1f", x)
-        val dY = String.format("%.1f", y)
-        return "{x:$dX,y:$dY}"
+        val fX = String.format("%.1f", x)
+        val fY = String.format("%.1f", y)
+        return "{x:$fX,y:$fY}"
     }
 }
 
@@ -33,8 +33,7 @@ class MutableStateJourneyPlayer(
 }
 
 class StateJourneyTerritoryRegion(
-    override val position: Point,
-    override val size: Size,
+    override val points: List<Point>,
     override val color: Color,
     override val isPassable: Boolean
 ) : State.Journey.Territory.Region
@@ -54,28 +53,32 @@ class MutableStateJourney(
 
 private val defaultTerritory: State.Journey.Territory = listOf(
     StateJourneyTerritoryRegion(
-        position = point(x = 3, y = 3),
-        size = size(width = 5, height = 3),
+        points = listOf(
+            point(x = 3 + 0, y = 3 + 0),
+            point(x = 3 + 8, y = 3 + 0),
+            point(x = 3 + 8, y = 3 + 6),
+            point(x = 3 + 5, y = 3 + 6),
+//            point(x = 3 + 5, y = 3 + 3),
+            point(x = 3 + 0, y = 3 + 3)
+        ),
         color = ColorEntity.GREEN,
         isPassable = false
     ),
     StateJourneyTerritoryRegion(
-        position = point(x = 8, y = 3),
-        size = size(width = 3, height = 6),
-        color = ColorEntity.GREEN,
-        isPassable = false
-    ),
-    StateJourneyTerritoryRegion(
-        position = point(x = 3, y = 8),
-        size = size(width = 3, height = 3),
-        color = ColorEntity.RED,
-        isPassable = false
+        points = listOf(
+            point(x = 3 + 0, y = 9 + 0),
+            point(x = 3 + 3, y = 9 + 0),
+            point(x = 3 + 3, y = 9 + 3),
+            point(x = 3 + 0, y = 9 + 3)
+        ),
+        color = ColorEntity.YELLOW,
+        isPassable = true
     )
 ).let { regions ->
     StateJourneyTerritory(
         size = size(
-            width = regions.maxBy { it.position.x }!!.let { it.position.x + it.size.width },
-            height = regions.maxBy { it.position.y }!!.let { it.position.y + it.size.height }
+            width = regions.flatMap { it.points }.maxBy { it.x }!!.x,
+            height = regions.flatMap { it.points }.maxBy { it.y }!!.y
         ),
         regions = regions
     )

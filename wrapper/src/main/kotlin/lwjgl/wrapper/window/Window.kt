@@ -273,6 +273,20 @@ private class WindowCanvas(
         )
     }
 
+    override fun drawLineLoop(
+        color: Color,
+        points: Iterable<Point>,
+        lineWidth: Float
+    ) {
+        GL11.glLineWidth(lineWidth)
+        glColorOf(color)
+        glTransaction(GL11.GL_LINE_LOOP) {
+            points.forEach {
+                glVertexOf(it)
+            }
+        }
+    }
+
     override fun drawRectangle(
         color: Color,
         pointTopLeft: Point,

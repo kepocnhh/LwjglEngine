@@ -20,6 +20,11 @@ interface Canvas {
         direction: Double,
         pointOfRotation: Point
     )
+    fun drawLineLoop(
+        color: Color,
+        points: Iterable<Point>,
+        lineWidth: Float
+    )
     fun drawRectangle(color: Color, pointTopLeft: Point, size: Size)
     fun drawRectangle(
         color: Color,

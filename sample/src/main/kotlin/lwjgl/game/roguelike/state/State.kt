@@ -25,8 +25,7 @@ interface State {
             val size: Size
 
             interface Region {
-                val position: Point
-                val size: Size
+                val points: List<Point>
                 val color: Color
                 val isPassable: Boolean
             }
