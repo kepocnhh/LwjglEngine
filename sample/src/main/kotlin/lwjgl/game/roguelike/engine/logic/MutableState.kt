@@ -75,10 +75,11 @@ private val defaultTerritory: State.Journey.Territory = listOf(
         isPassable = true
     )
 ).let { regions ->
+    val points = regions.flatMap { it.points }
     StateJourneyTerritory(
         size = size(
-            width = regions.flatMap { it.points }.maxBy { it.x }!!.x,
-            height = regions.flatMap { it.points }.maxBy { it.y }!!.y
+            width = points.maxBy { it.x }!!.x,
+            height = points.maxBy { it.y }!!.y
         ),
         regions = regions
     )

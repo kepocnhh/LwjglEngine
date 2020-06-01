@@ -154,8 +154,8 @@ object JoystickEngineLogic : EngineLogic {
         )
         val joystick = engineInputState.joysticks[GLFW.GLFW_JOYSTICK_1]
         if(joystick != null) {
-            EngineInputState.Joystick.Button.Interaction.values().forEach {
-                val isPressed = joystick.button.interaction[it] ?: false
+            EngineInputState.Joystick.Pad.Button.values().forEach {
+                val isPressed = joystick.leftPad.isPressed(it)
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,
                     color = ColorEntity.GREEN,
@@ -164,8 +164,8 @@ object JoystickEngineLogic : EngineLogic {
                     fontHeight = 14f
                 )
             }
-            EngineInputState.Joystick.Button.Directional.values().forEach {
-                val isPressed = joystick.button.directional[it] ?: false
+            EngineInputState.Joystick.Pad.Button.values().forEach {
+                val isPressed = joystick.rightPad.isPressed(it)
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,
                     color = ColorEntity.GREEN,
@@ -175,8 +175,8 @@ object JoystickEngineLogic : EngineLogic {
                 )
             }
             setOf(
-                "<" to joystick.button.bumperLeft,
-                ">" to joystick.button.bumperRight
+                "<" to joystick.leftPad.isPressed(EngineInputState.Joystick.Pad.Button.BUMPER),
+                ">" to joystick.rightPad.isPressed(EngineInputState.Joystick.Pad.Button.BUMPER)
             ).forEachIndexed { index, (key, isPressed) ->
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,
@@ -186,19 +186,9 @@ object JoystickEngineLogic : EngineLogic {
                     fontHeight = 14f
                 )
             }
-            EngineInputState.Joystick.Button.Main.values().forEach {
-                val isPressed = joystick.button.main[it] ?: false
-                canvas.drawText(
-                    fullPathFont = fullPathFontMain,
-                    color = ColorEntity.GREEN,
-                    pointTopLeft = point(100 * it.ordinal, 200),
-                    text = "$it: " + if (isPressed) "+" else "-",
-                    fontHeight = 14f
-                )
-            }
             setOf(
-                joystick.joyLeft,
-                joystick.joyRight
+                joystick.leftPad.joy,
+                joystick.rightPad.joy
             ).forEachIndexed { index, joy ->
                 canvas.drawLine(
                     color = ColorEntity.GREEN,
@@ -215,20 +205,20 @@ object JoystickEngineLogic : EngineLogic {
                 )
             }
             setOf(
-                joystick.triggerLeft,
-                joystick.triggerRight
-            ).forEachIndexed { index, trigger ->
+                joystick.leftPad.triggerPosition,
+                joystick.rightPad.triggerPosition
+            ).forEachIndexed { index, triggerPosition ->
                 canvas.drawLine(
                     color = ColorEntity.GREEN,
                     pointStart = point(x = 50 + 200 * index, y = 300),
-                    pointFinish = point(x = 50 + 200 * index, y = (300 + (trigger.position + 1) * 25).toInt()),
+                    pointFinish = point(x = 50 + 200 * index, y = (300 + (triggerPosition + 1) * 25).toInt()),
                     lineWidth = 1f
                 )
                 canvas.drawText(
                     fullPathFont = fullPathFontMain,
                     color = ColorEntity.GREEN,
                     pointTopLeft = point(x = 50 + 200 * index, y = 300),
-                    text = trigger.position.toString(),
+                    text = triggerPosition.toString(),
                     fontHeight = 14f
                 )
             }

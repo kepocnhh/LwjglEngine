@@ -6,6 +6,7 @@ import lwjgl.engine.common.input.EngineInputCallback
 import lwjgl.engine.common.input.EngineInputState
 import lwjgl.engine.common.input.FunctionKey
 import lwjgl.engine.common.input.PrintableKey
+import lwjgl.game.roguelike.engine.render.Render
 import lwjgl.game.roguelike.state.State
 import lwjgl.game.roguelike.util.TimeUnit
 import lwjgl.wrapper.canvas.Canvas
@@ -85,8 +86,8 @@ object RoguelikeEngineLogic : EngineLogic {
                 size - 1 -> 0
                 else -> i + 1
             }
-            val pointStart = points[i]
-            val pointFinish = points[next]
+//            val pointStart = points[i]
+//            val pointFinish = points[next]
             val distanceActual = calculateDistance(
                 pointStart = points[i],
                 pointFinish = points[next],
@@ -237,9 +238,10 @@ object RoguelikeEngineLogic : EngineLogic {
         joystick: EngineInputState.Joystick
     ) {
 //        val min = 0.25
-        val min = 0.025
-        val joyLeftX = joystick.joyLeft.x
-        val joyLeftY = joystick.joyLeft.y
+        val min = 0.1
+//        val min = 0.025
+        val joyLeftX = joystick.leftPad.joy.x
+        val joyLeftY = joystick.leftPad.joy.y
         when {
             joyLeftX.absoluteValue < min && joyLeftY.absoluteValue < min -> return
             joyLeftX.absoluteValue < min -> {
@@ -402,18 +404,15 @@ object RoguelikeEngineLogic : EngineLogic {
             player = journey.player
         )
     }
+    private val render = Render(
+        fullPathFont = fullPathFont,
+        pixelsPerUnit = pixelsPerUnit
+    )
     override fun onRender(canvas: Canvas, engineInputState: EngineInputState, engineProperty: EngineProperty) {
-        val state: State = mutableState
-        //
-        onRender(canvas, engineProperty = engineProperty, journey = state.journey)
-        // todo
-        val framesPerSecond = TimeUnit.NANO_IN_SECOND / (engineProperty.timeNow - engineProperty.timeLast)
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(engineProperty.pictureSize.width - 50, engineProperty.pictureSize.height - 50),
-            text = String.format("%.1f", framesPerSecond),
-            fontHeight = 16f
+        render.onRender(
+            canvas = canvas,
+            engineProperty = engineProperty,
+            state = mutableState
         )
     }
 }

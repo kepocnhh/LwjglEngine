@@ -8,7 +8,8 @@ interface State {
     val shouldEngineStop: Boolean
 
     enum class Common {
-        JOURNEY
+        MAIN_MENU,
+        JOURNEY,
     }
 
     val common: Common

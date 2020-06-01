@@ -44,27 +44,27 @@ fun Int.toFunctionKeyOrNull(): FunctionKey? {
     }
 }
 
-fun EngineInputState.Joystick.Button.Interaction.toBufferIndex(): Int {
-    return when (this) {
-        EngineInputState.Joystick.Button.Interaction.A -> GLFW.GLFW_GAMEPAD_BUTTON_A
-        EngineInputState.Joystick.Button.Interaction.B -> GLFW.GLFW_GAMEPAD_BUTTON_B
-        EngineInputState.Joystick.Button.Interaction.X -> GLFW.GLFW_GAMEPAD_BUTTON_X
-        EngineInputState.Joystick.Button.Interaction.Y -> GLFW.GLFW_GAMEPAD_BUTTON_Y
-    }
-}
-
-fun EngineInputState.Joystick.Button.Directional.toBufferIndex(): Int {
-    return when (this) {
-        EngineInputState.Joystick.Button.Directional.UP -> 10
-        EngineInputState.Joystick.Button.Directional.RIGHT -> 11
-        EngineInputState.Joystick.Button.Directional.DOWN -> 12
-        EngineInputState.Joystick.Button.Directional.LEFT -> 13
-    }
-}
-
-fun EngineInputState.Joystick.Button.Main.toBufferIndex(): Int {
-    return when (this) {
-        EngineInputState.Joystick.Button.Main.BACK -> GLFW.GLFW_GAMEPAD_BUTTON_BACK
-        EngineInputState.Joystick.Button.Main.START -> GLFW.GLFW_GAMEPAD_BUTTON_START
-    }
-}
+//fun EngineInputState.Joystick.Button.Interaction.toBufferIndex(): Int {
+//    return when (this) {
+//        EngineInputState.Joystick.Button.Interaction.A -> GLFW.GLFW_GAMEPAD_BUTTON_A
+//        EngineInputState.Joystick.Button.Interaction.B -> GLFW.GLFW_GAMEPAD_BUTTON_B
+//        EngineInputState.Joystick.Button.Interaction.X -> GLFW.GLFW_GAMEPAD_BUTTON_X
+//        EngineInputState.Joystick.Button.Interaction.Y -> GLFW.GLFW_GAMEPAD_BUTTON_Y
+//    }
+//}
+//
+//fun EngineInputState.Joystick.Button.Directional.toBufferIndex(): Int {
+//    return when (this) {
+//        EngineInputState.Joystick.Button.Directional.UP -> 10
+//        EngineInputState.Joystick.Button.Directional.RIGHT -> 11
+//        EngineInputState.Joystick.Button.Directional.DOWN -> 12
+//        EngineInputState.Joystick.Button.Directional.LEFT -> 13
+//    }
+//}
+//
+//fun EngineInputState.Joystick.Button.Main.toBufferIndex(): Int {
+//    return when (this) {
+//        EngineInputState.Joystick.Button.Main.BACK -> GLFW.GLFW_GAMEPAD_BUTTON_BACK
+//        EngineInputState.Joystick.Button.Main.START -> GLFW.GLFW_GAMEPAD_BUTTON_START
+//    }
+//}
