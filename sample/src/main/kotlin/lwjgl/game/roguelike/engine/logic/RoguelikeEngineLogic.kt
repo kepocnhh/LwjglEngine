@@ -22,33 +22,160 @@ import kotlin.math.absoluteValue
 
 object RoguelikeEngineLogic : EngineLogic {
     private val fullPathFont = ResourceProvider.requireResourceAsFile("font.main.ttf").absolutePath
+    private val defaultTerritory: State.Journey.Territory = listOf(
+        StateJourneyTerritoryRegion(
+            points = listOf(
+                point(x = 3 + 0, y = 3 + 0),
+                point(x = 3 + 8, y = 3 + 0),
+                point(x = 3 + 8, y = 3 + 6),
+                point(x = 3 + 5, y = 3 + 6),
+    //            point(x = 3 + 5, y = 3 + 3),
+                point(x = 3 + 0, y = 3 + 3)
+            ),
+            color = ColorEntity.GREEN,
+            isPassable = false
+        ),
+        StateJourneyTerritoryRegion(
+            points = listOf(
+                point(x = 3 + 0, y = 9 + 0),
+                point(x = 3 + 3, y = 9 + 0),
+                point(x = 3 + 3, y = 9 + 3),
+                point(x = 3 + 0, y = 9 + 3)
+            ),
+            color = ColorEntity.YELLOW,
+            isPassable = true
+        )
+    ).let { regions ->
+        val points = regions.flatMap { it.points }
+        StateJourneyTerritory(
+            size = size(
+                width = points.maxBy { it.x }!!.x,
+                height = points.maxBy { it.y }!!.y
+            ),
+            regions = regions
+        )
+    }
+
     private val mutableState: MutableState = MutableState(
-        common = State.Common.JOURNEY
+        defaultCommon = State.Common.MAIN_MENU
     )
 
     override val framesPerSecondExpected: Int = 60
     override val shouldEngineStop: Boolean get() {
         return mutableState.shouldEngineStop
     }
-    override val engineInputCallback = object : EngineInputCallback {
-        override fun onPrintableKey(key: PrintableKey, status: KeyStatus) {
-            // ignored
-        }
 
-        override fun onFunctionKey(key: FunctionKey, status: KeyStatus) {
-            when (key) {
-                FunctionKey.ESCAPE -> {
-                    when (status) {
-                        KeyStatus.RELEASE -> {
-                            mutableState.engineStop()
-                        }
-                        else -> {
-                            // ignored
+    private fun onMainMenuInputCallback(key: PrintableKey, status: KeyStatus) {
+        when (key) {
+            PrintableKey.S -> {
+                if (status == KeyStatus.PRESS) {
+                    val ordinal = mutableState.mainMenu.selectedMenuItem.ordinal
+                    val values = State.MainMenu.Item.values()
+                    mutableState.mainMenu.selectedMenuItem = when (ordinal) {
+                        values.lastIndex -> values.first()
+                        else -> values[ordinal + 1]
+                    }
+                }
+            }
+            PrintableKey.W -> {
+                if (status == KeyStatus.PRESS) {
+                    val ordinal = mutableState.mainMenu.selectedMenuItem.ordinal
+                    val values = State.MainMenu.Item.values()
+                    mutableState.mainMenu.selectedMenuItem = when (ordinal) {
+                        0 -> values.last()
+                        else -> values[ordinal - 1]
+                    }
+                }
+            }
+        }
+    }
+    private fun Size.fromUnitsToPixels(pixelsPerUnit: Double): Size {
+        return size(
+            width = width * pixelsPerUnit,
+            height = height * pixelsPerUnit
+        )
+    }
+    private fun Point.fromUnitsToPixels(pixelsPerUnit: Double): Point {
+        return point(
+            x = x * pixelsPerUnit,
+            y = y * pixelsPerUnit
+        )
+    }
+    private fun State.Journey.Territory.fromUnitsToPixels(pixelsPerUnit: Double): State.Journey.Territory {
+        return StateJourneyTerritory(
+            size = size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
+            regions = regions.map { region ->
+                StateJourneyTerritoryRegion(
+                    points = region.points.map {
+                        it.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit)
+                    },
+                    color = region.color,
+                    isPassable = region.isPassable
+                )
+            }
+        )
+    }
+    private fun onMainMenuInputCallback(key: FunctionKey, status: KeyStatus) {
+        when (key) {
+            FunctionKey.ESCAPE -> {
+                when (status) {
+                    KeyStatus.RELEASE -> {
+                        mutableState.engineStop()
+                    }
+                }
+            }
+            FunctionKey.ENTER -> {
+                when (status) {
+                    KeyStatus.PRESS -> {
+                        when (mutableState.mainMenu.selectedMenuItem) {
+                            State.MainMenu.Item.START_NEW_GAME -> {
+                                val territory = defaultTerritory.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit)
+                                val journey = MutableStateJourney(territory)
+                                val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
+                                journey.player.position.x = distanceMin
+                                journey.player.position.y = distanceMin
+                                val direction = 135.0
+                                journey.player.directionActual = direction
+                                journey.player.directionExpected = direction
+                                mutableState.journey = journey
+                                mutableState.common = State.Common.JOURNEY
+                            }
+                            State.MainMenu.Item.EXIT -> {
+                                mutableState.engineStop()
+                            }
                         }
                     }
                 }
-                else -> {
+            }
+        }
+    }
+    override val engineInputCallback = object : EngineInputCallback {
+        override fun onPrintableKey(key: PrintableKey, status: KeyStatus) {
+            when (mutableState.common) {
+                State.Common.MAIN_MENU -> {
+                    onMainMenuInputCallback(key, status)
+                }
+                State.Common.JOURNEY -> {
                     // ignored
+                }
+            }
+        }
+
+        override fun onFunctionKey(key: FunctionKey, status: KeyStatus) {
+            when (mutableState.common) {
+                State.Common.MAIN_MENU -> {
+                    onMainMenuInputCallback(key, status)
+                }
+                State.Common.JOURNEY -> {
+                    when (key) {
+                        FunctionKey.ESCAPE -> {
+                            when (status) {
+                                KeyStatus.RELEASE -> {
+                                    mutableState.engineStop()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -58,12 +185,6 @@ object RoguelikeEngineLogic : EngineLogic {
 
     override fun onPreLoop() {
         // todo
-        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-        mutableState.journey.player.position.x = distanceMin
-        mutableState.journey.player.position.y = distanceMin
-        val direction = 135.0
-        mutableState.journey.player.directionActual = direction
-        mutableState.journey.player.directionExpected = direction
     }
 
     private fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
@@ -134,11 +255,12 @@ object RoguelikeEngineLogic : EngineLogic {
     }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
+        journey: MutableStateJourney,
         velocityMultiple: Double,
         dX: Double,
         dY: Double
     ) {
-        val player = mutableState.journey.player
+        val player = journey.player
         val (oldX, oldY) = player.position
         //
         player.directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = oldX + dX, newY = oldY + dY)
@@ -151,49 +273,25 @@ object RoguelikeEngineLogic : EngineLogic {
 //        val pW = playerSize.width / 2
 //        val pH = playerSize.height / 2
         val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-        val territory = mutableState.journey.territory
+        val territory = journey.territory
 //        val isMoveX = true
 //        val isMoveY = true
-        val isMoveX = newX in distanceMin..(territory.size.width * pixelsPerUnit - distanceMin) && !territory.regions.any { region ->
-            !region.isPassable && closerThan(
-                points = region.points.map {
-                    point(
-                        x = it.x * pixelsPerUnit,
-                        y = it.y * pixelsPerUnit
-                    )
-                },
+        val isMoveX = newX in distanceMin..(territory.size.width - distanceMin) && !territory.regions.any {
+            !it.isPassable && closerThan(
+                points = it.points,
                 x = newX,
                 y = oldY,
                 distanceMin = distanceMin
             )
         }
-        val isMoveY = newY in distanceMin..(territory.size.height * pixelsPerUnit - distanceMin) && !territory.regions.any { region ->
-            !region.isPassable && closerThan(
-                points = region.points.map {
-                    point(
-                        x = it.x * pixelsPerUnit,
-                        y = it.y * pixelsPerUnit
-                    )
-                },
+        val isMoveY = newY in distanceMin..(territory.size.height - distanceMin) && !territory.regions.any {
+            !it.isPassable && closerThan(
+                points = it.points,
                 x = oldX,
                 y = newY,
                 distanceMin = distanceMin
             )
         }
-//        val isMoveX = newX in pW..(territory.size.width * pixelsPerUnit - pW) &&
-//            !territory.regions.any {
-//                val rX = it.position.x * pixelsPerUnit
-//                val rY = it.position.y * pixelsPerUnit
-//                newX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW) &&
-//                    oldY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH)
-//            }
-//        val isMoveY = newY in pH..(territory.size.height* pixelsPerUnit - pH) &&
-//            !territory.regions.any {
-//                val rX = it.position.x * pixelsPerUnit
-//                val rY = it.position.y * pixelsPerUnit
-//                newY in (rY - pH)..(rY + it.size.height * pixelsPerUnit + pH) &&
-//                    oldX in (rX - pW)..(rX + it.size.width * pixelsPerUnit + pW)
-//            }
         if (isMoveX) {
             player.position.x = newX
         }
@@ -203,6 +301,7 @@ object RoguelikeEngineLogic : EngineLogic {
     }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
+        journey: MutableStateJourney,
         keyboard: EngineInputState.Keyboard
     ) {
         val printableKeys = keyboard.printableKeys
@@ -231,10 +330,17 @@ object RoguelikeEngineLogic : EngineLogic {
             dY += 1.0
         }
         val velocityMultiple = 1.0
-        onUpdateStatePlayerPosition(dTime = dTime, velocityMultiple = velocityMultiple, dX = dX, dY = dY)
+        onUpdateStatePlayerPosition(
+            dTime = dTime,
+            journey = journey,
+            velocityMultiple = velocityMultiple,
+            dX = dX,
+            dY = dY
+        )
     }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
+        journey: MutableStateJourney,
         joystick: EngineInputState.Joystick
     ) {
 //        val min = 0.25
@@ -246,11 +352,17 @@ object RoguelikeEngineLogic : EngineLogic {
             joyLeftX.absoluteValue < min && joyLeftY.absoluteValue < min -> return
             joyLeftX.absoluteValue < min -> {
                 val velocityMultiple = sqrt(joyLeftY * joyLeftY)
-                onUpdateStatePlayerPosition(dTime = dTime, velocityMultiple = velocityMultiple, dX = 0.0, dY = joyLeftY)
+                onUpdateStatePlayerPosition(
+                    dTime = dTime,
+                    journey = journey,
+                    velocityMultiple = velocityMultiple, dX = 0.0, dY = joyLeftY)
             }
             joyLeftY.absoluteValue < min -> {
                 val velocityMultiple = sqrt(joyLeftX * joyLeftX)
-                onUpdateStatePlayerPosition(dTime = dTime, velocityMultiple = velocityMultiple, dX = joyLeftX, dY = 0.0)
+                onUpdateStatePlayerPosition(
+                    dTime = dTime,
+                    journey = journey,
+                    velocityMultiple = velocityMultiple, dX = joyLeftX, dY = 0.0)
             }
             else -> {
                 val dX: Double
@@ -270,27 +382,39 @@ object RoguelikeEngineLogic : EngineLogic {
                     }
                 }
                 val velocityMultiple = sqrt(dX * dX + dY * dY)
-                onUpdateStatePlayerPosition(dTime = dTime, velocityMultiple = velocityMultiple, dX = dX, dY = dY)
+                onUpdateStatePlayerPosition(
+                    dTime = dTime,
+                    journey = journey,
+                    velocityMultiple = velocityMultiple, dX = dX, dY = dY)
             }
         }
     }
-    override fun onUpdateState(engineInputState: EngineInputState, engineProperty: EngineProperty) {
+    private fun onUpdateStateMainMenu(engineInputState: EngineInputState, engineProperty: EngineProperty) {
+        // todo
+    }
+    private fun onUpdateStateJourney(
+        engineInputState: EngineInputState,
+        engineProperty: EngineProperty,
+        journey: MutableStateJourney
+    ) {
         val dTime = engineProperty.timeNow - engineProperty.timeLast
         val joystick = engineInputState.joysticks.firstOrNull { it != null }
         if (joystick == null) {
             onUpdateStatePlayerPosition(
                 dTime = dTime,
+                journey = journey,
                 keyboard = engineInputState.keyboard
             )
         } else {
             onUpdateStatePlayerPosition(
                 dTime = dTime,
+                journey = journey,
                 joystick = joystick
             )
         }
         //
-        val directionActual = mutableState.journey.player.directionActual
-        val directionExpected = mutableState.journey.player.directionExpected
+        val directionActual = journey.player.directionActual
+        val directionExpected = journey.player.directionExpected
         if (directionActual != directionExpected) {
             val directionVelocity = 360.0 / TimeUnit.NANO_IN_SECOND
             val difference = (directionActual - directionExpected).let {
@@ -302,108 +426,29 @@ object RoguelikeEngineLogic : EngineLogic {
             }
             val d = directionVelocity * dTime
             if (d > difference.absoluteValue) {
-                mutableState.journey.player.directionActual = directionExpected
+                journey.player.directionActual = directionExpected
             } else {
                 if (difference < 0) {
-                    mutableState.journey.player.directionActual += d
+                    journey.player.directionActual += d
                 } else {
-                    mutableState.journey.player.directionActual -= d
+                    journey.player.directionActual -= d
                 }
             }
         }
-        // todo
+    }
+    override fun onUpdateState(engineInputState: EngineInputState, engineProperty: EngineProperty) {
+        when (mutableState.common) {
+            State.Common.MAIN_MENU -> {
+                onUpdateStateMainMenu(engineInputState, engineProperty)
+            }
+            State.Common.JOURNEY -> {
+                val journey = mutableState.journey
+                checkNotNull(journey)
+                onUpdateStateJourney(engineInputState, engineProperty, journey = journey)
+            }
+        }
     }
 
-    private fun onRender(
-        canvas: Canvas,
-        center: Point,
-        player: State.Journey.Player
-    ) {
-        val playerPosition = point(
-            x = center.x - playerSize.width / 2,
-            y = center.y - playerSize.height /2
-        )
-        canvas.drawRectangle(
-            color = ColorEntity.RED,
-            pointTopLeft = playerPosition,
-            size = playerSize,
-            direction = player.directionActual,
-            pointOfRotation = center
-        )
-        canvas.drawLine(
-            color = ColorEntity.RED,
-            pointStart = center,
-            pointFinish = point(
-                x = center.x,
-                y = playerPosition.y
-            ),
-            lineWidth = 1f,
-            direction = player.directionActual,
-            pointOfRotation = center
-        )
-        canvas.drawPoint(
-            color = ColorEntity.WHITE,
-            point = playerPosition
-        )
-        canvas.drawPoint(
-            color = ColorEntity.GREEN,
-            point = center
-        )
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(0,0),
-            text = player.position.toString(),
-            fontHeight = 16f
-        )
-        canvas.drawText(
-            fullPathFont = fullPathFont,
-            color = ColorEntity.GREEN,
-            pointTopLeft = point(0,25),
-            text = String.format("%.1f", player.directionActual),
-            fontHeight = 16f
-        )
-    }
-    private fun onRender(
-        canvas: Canvas,
-        engineProperty: EngineProperty,
-        journey: State.Journey
-    ) {
-        val center = point(x = engineProperty.pictureSize.width / 2, y = engineProperty.pictureSize.height / 2)
-        canvas.drawRectangle(
-            color = ColorEntity.WHITE,
-            pointTopLeft = point(
-                x = center.x - journey.player.position.x,
-                y = center.y - journey.player.position.y
-            ),
-            size = size(width = journey.territory.size.width * pixelsPerUnit, height = journey.territory.size.height * pixelsPerUnit)
-        )
-        journey.territory.regions.forEach { region ->
-            canvas.drawLineLoop(
-                color = region.color,
-                points = region.points.map {
-                    point(
-                        x = center.x + it.x * pixelsPerUnit - journey.player.position.x,
-                        y = center.y + it.y * pixelsPerUnit - journey.player.position.y
-                    )
-                },
-                lineWidth = 1f
-            )
-//            canvas.drawRectangle(
-//                color = region.color,
-//                pointTopLeft = point(
-//                    x = center.x + region.position.x * pixelsPerUnit - journey.player.position.x,
-//                    y = center.y + region.position.y * pixelsPerUnit - journey.player.position.y
-//                ),
-//                size = size(width = region.size.width * pixelsPerUnit, height = region.size.height * pixelsPerUnit)
-//            )
-        }
-        onRender(
-            canvas = canvas,
-            center = center,
-            player = journey.player
-        )
-    }
     private val render = Render(
         fullPathFont = fullPathFont,
         pixelsPerUnit = pixelsPerUnit

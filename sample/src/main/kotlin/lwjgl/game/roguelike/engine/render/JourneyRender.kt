@@ -9,7 +9,7 @@ import lwjgl.wrapper.entity.size
 
 class JourneyRender(
     fullPathFont: String,
-    private val pixelsPerUnit: Double
+    pixelsPerUnit: Double
 ) {
     private val playerRender = JourneyPlayerRender(
         fullPathFont = fullPathFont,
@@ -27,18 +27,15 @@ class JourneyRender(
                 x = center.x - journey.player.position.x,
                 y = center.y - journey.player.position.y
             ),
-            size = size(
-                width = journey.territory.size.width * pixelsPerUnit,
-                height = journey.territory.size.height * pixelsPerUnit
-            )
+            size = journey.territory.size
         )
         journey.territory.regions.forEach { region ->
             canvas.drawLineLoop(
                 color = region.color,
                 points = region.points.map {
                     point(
-                        x = center.x + it.x * pixelsPerUnit - journey.player.position.x,
-                        y = center.y + it.y * pixelsPerUnit - journey.player.position.y
+                        x = center.x + it.x - journey.player.position.x,
+                        y = center.y + it.y - journey.player.position.y
                     )
                 },
                 lineWidth = 1f

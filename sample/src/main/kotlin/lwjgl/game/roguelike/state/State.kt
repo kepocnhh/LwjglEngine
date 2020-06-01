@@ -13,7 +13,17 @@ interface State {
     }
 
     val common: Common
-    val journey: Journey
+
+    interface MainMenu {
+        enum class Item {
+            START_NEW_GAME,
+            EXIT,
+        }
+
+        val selectedMenuItem: Item
+    }
+
+    val mainMenu: MainMenu
 
     interface Journey {
         interface Player {
@@ -37,4 +47,6 @@ interface State {
         val player: Player
         val territory: Territory
     }
+
+    val journey: Journey?
 }

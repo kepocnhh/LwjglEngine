@@ -9,6 +9,10 @@ import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
 
+class MutableStateMainMenu(
+    override var selectedMenuItem: State.MainMenu.Item
+) : State.MainMenu
+
 class MutablePoint(
     override var x: Double,
     override var y: Double
@@ -51,48 +55,18 @@ class MutableStateJourney(
     )
 }
 
-private val defaultTerritory: State.Journey.Territory = listOf(
-    StateJourneyTerritoryRegion(
-        points = listOf(
-            point(x = 3 + 0, y = 3 + 0),
-            point(x = 3 + 8, y = 3 + 0),
-            point(x = 3 + 8, y = 3 + 6),
-            point(x = 3 + 5, y = 3 + 6),
-//            point(x = 3 + 5, y = 3 + 3),
-            point(x = 3 + 0, y = 3 + 3)
-        ),
-        color = ColorEntity.GREEN,
-        isPassable = false
-    ),
-    StateJourneyTerritoryRegion(
-        points = listOf(
-            point(x = 3 + 0, y = 9 + 0),
-            point(x = 3 + 3, y = 9 + 0),
-            point(x = 3 + 3, y = 9 + 3),
-            point(x = 3 + 0, y = 9 + 3)
-        ),
-        color = ColorEntity.YELLOW,
-        isPassable = true
-    )
-).let { regions ->
-    val points = regions.flatMap { it.points }
-    StateJourneyTerritory(
-        size = size(
-            width = points.maxBy { it.x }!!.x,
-            height = points.maxBy { it.y }!!.y
-        ),
-        regions = regions
-    )
-}
-
 class MutableState(
-    override var common: State.Common
+    defaultCommon: State.Common
 ) : State {
+    override var common: State.Common = defaultCommon
     private lateinit var shouldEngineStopUnit: Unit
     override val shouldEngineStop: Boolean get() = ::shouldEngineStopUnit.isInitialized
     fun engineStop() {
         shouldEngineStopUnit = Unit
     }
 
-    override val journey: MutableStateJourney = MutableStateJourney(defaultTerritory)
+    override val mainMenu: MutableStateMainMenu = MutableStateMainMenu(
+        selectedMenuItem = State.MainMenu.Item.START_NEW_GAME
+    )
+    override var journey: MutableStateJourney? = null
 }

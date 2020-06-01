@@ -40,6 +40,7 @@ fun Int.toPrintableKeyOrNull(): PrintableKey? {
 fun Int.toFunctionKeyOrNull(): FunctionKey? {
     return when (this) {
         GLFW.GLFW_KEY_ESCAPE -> FunctionKey.ESCAPE
+        GLFW.GLFW_KEY_ENTER -> FunctionKey.ENTER
         else -> null
     }
 }
