@@ -22,30 +22,27 @@ import kotlin.math.absoluteValue
 
 object RoguelikeEngineLogic : EngineLogic {
     private val fullPathFont = ResourceProvider.requireResourceAsFile("font.main.ttf").absolutePath
-    private val defaultTerritory: State.Journey.Territory = listOf(
+    private fun rect(leftTop: Point, rightBottom: Point): List<Point> {
+        return listOf(
+            leftTop, // </\
+            point(x = rightBottom.x, y = leftTop.y), // /\>
+            rightBottom, // \/>
+            point(x = leftTop.x, y = rightBottom.y) // <\/
+        )
+    }
+    private val defaultTerritoryRegions = listOf(
         StateJourneyTerritoryRegion(
-            points = listOf(
-                point(x = 3 + 0, y = 3 + 0),
-                point(x = 3 + 8, y = 3 + 0),
-                point(x = 3 + 8, y = 3 + 6),
-                point(x = 3 + 5, y = 3 + 6),
-    //            point(x = 3 + 5, y = 3 + 3),
-                point(x = 3 + 0, y = 3 + 3)
-            ),
-            color = ColorEntity.GREEN,
-            isPassable = false
+            points = rect(leftTop = point(x = 0, y = 0), rightBottom = point(x = 2, y = 2)),
+            color = ColorEntity.RED,
+            isPassable = true
         ),
         StateJourneyTerritoryRegion(
-            points = listOf(
-                point(x = 3 + 0, y = 9 + 0),
-                point(x = 3 + 3, y = 9 + 0),
-                point(x = 3 + 3, y = 9 + 3),
-                point(x = 3 + 0, y = 9 + 3)
-            ),
-            color = ColorEntity.YELLOW,
+            points = rect(leftTop = point(x = 18, y = 18), rightBottom = point(x = 20, y = 20)),
+            color = ColorEntity.BLUE,
             isPassable = true
         )
-    ).let { regions ->
+    )
+    private val defaultTerritory: State.Journey.Territory = defaultTerritoryRegions.let { regions ->
         val points = regions.flatMap { it.points }
         StateJourneyTerritory(
             size = size(
@@ -130,13 +127,31 @@ object RoguelikeEngineLogic : EngineLogic {
                         when (mutableState.mainMenu.selectedMenuItem) {
                             State.MainMenu.Item.START_NEW_GAME -> {
                                 val territory = defaultTerritory.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit)
-                                val journey = MutableStateJourney(territory)
                                 val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-                                journey.player.position.x = distanceMin
-                                journey.player.position.y = distanceMin
                                 val direction = 135.0
-                                journey.player.directionActual = direction
-                                journey.player.directionExpected = direction
+                                val velocity = 5.0 / TimeUnit.NANO_IN_SECOND
+                                val journey = MutableStateJourney(
+                                    territory = territory,
+                                    player = MutableStateJourneyPlayer(
+                                        position = MutablePoint(x = distanceMin, y = distanceMin),
+                                        velocity = velocity,
+                                        directionActual = direction,
+                                        directionExpected = direction
+                                    ),
+                                    snapshot = MutableStateJourneySnapshot(
+                                        dummy = MutableDummy(
+                                            position = MutablePoint(
+                                                x = territory.size.width - distanceMin,
+                                                y = territory.size.height -distanceMin
+//                                                x = distanceMin,
+//                                                y = distanceMin + pixelsPerUnit * 2
+                                            ),
+                                            velocity = velocity,
+                                            directionActual = 315.0,
+                                            directionExpected = 315.0
+                                        )
+                                    )
+                                )
                                 mutableState.journey = journey
                                 mutableState.common = State.Common.JOURNEY
                             }

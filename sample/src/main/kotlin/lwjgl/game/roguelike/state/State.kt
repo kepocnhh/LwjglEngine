@@ -1,5 +1,6 @@
 package lwjgl.game.roguelike.state
 
+import lwjgl.game.roguelike.engine.entity.Dummy
 import lwjgl.wrapper.entity.Color
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
@@ -26,6 +27,11 @@ interface State {
     val mainMenu: MainMenu
 
     interface Journey {
+        interface Snapshot /* todo */ {
+            val dummy: Dummy
+        }
+        val snapshot: Snapshot // todo
+
         interface Player {
             val position: Point
             val velocity: Double // unit per nanosecond

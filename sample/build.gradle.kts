@@ -31,12 +31,7 @@ dependencies {
     val nativesName = LwjglUtil.requireNativesName()
     val group = LwjglUtil.group
     implementation(platform("$group:lwjgl-bom:${Version.lwjgl}"))
-    setOf(
-        "lwjgl",
-        "lwjgl-glfw",
-        "lwjgl-opengl",
-        "lwjgl-stb"
-    ).forEach { name ->
+    LwjglUtil.modules.forEach { name ->
         implementation(group = group, name = name)
         runtimeOnly(group = group, name = name, classifier = nativesName)
     }

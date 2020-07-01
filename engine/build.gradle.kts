@@ -11,12 +11,7 @@ dependencies {
 
     val group = LwjglUtil.group
     implementation(platform("$group:lwjgl-bom:${Version.lwjgl}"))
-    setOf(
-        "lwjgl",
-        "lwjgl-glfw",
-        "lwjgl-opengl",
-        "lwjgl-stb"
-    ).forEach { name ->
+    LwjglUtil.modules.forEach { name ->
         implementation(group = group, name = name)
     }
 }

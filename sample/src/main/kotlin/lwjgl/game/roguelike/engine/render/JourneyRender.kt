@@ -11,22 +11,24 @@ class JourneyRender(
     fullPathFont: String,
     pixelsPerUnit: Double
 ) {
+    private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit)
     private val playerRender = JourneyPlayerRender(
         fullPathFont = fullPathFont,
-        playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
+        playerSize = playerSize // todo
     )
+    private val movableRender: MovableRender = MovableRender(size = playerSize)
+
     fun onRender(
         canvas: Canvas,
         journey: State.Journey,
         engineProperty: EngineProperty
     ) {
         val center = point(x = engineProperty.pictureSize.width / 2, y = engineProperty.pictureSize.height / 2)
+        val dX = center.x - journey.player.position.x
+        val dY = center.y - journey.player.position.y
         canvas.drawRectangle(
             color = ColorEntity.WHITE,
-            pointTopLeft = point(
-                x = center.x - journey.player.position.x,
-                y = center.y - journey.player.position.y
-            ),
+            pointTopLeft = point(x = dX, y = dY),
             size = journey.territory.size
         )
         journey.territory.regions.forEach { region ->
@@ -34,13 +36,20 @@ class JourneyRender(
                 color = region.color,
                 points = region.points.map {
                     point(
-                        x = center.x + it.x - journey.player.position.x,
-                        y = center.y + it.y - journey.player.position.y
+                        x = dX + it.x,
+                        y = dY + it.y
                     )
                 },
                 lineWidth = 1f
             )
         }
+        movableRender.onRender(
+            canvas = canvas,
+            dX = dX,
+            dY = dY,
+            movable = journey.snapshot.dummy,
+            color = ColorEntity.BLUE
+        )
         playerRender.onRender(
             canvas = canvas,
             player = journey.player,

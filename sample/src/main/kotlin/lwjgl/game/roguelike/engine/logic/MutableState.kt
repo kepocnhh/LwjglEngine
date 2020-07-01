@@ -1,5 +1,6 @@
 package lwjgl.game.roguelike.engine.logic
 
+import lwjgl.game.roguelike.engine.entity.Dummy
 import lwjgl.game.roguelike.state.State
 import lwjgl.game.roguelike.util.TimeUnit
 import lwjgl.wrapper.entity.Color
@@ -28,13 +29,11 @@ class MutablePoint(
 }
 
 class MutableStateJourneyPlayer(
-    override val position: MutablePoint
-) : State.Journey.Player {
-//    override val velocity: Double = 1.0
-    override val velocity: Double = 5.0 / TimeUnit.NANO_IN_SECOND
-    override var directionActual: Double = 0.0
-    override var directionExpected: Double = 0.0
-}
+    override val position: MutablePoint,
+    override val velocity: Double,
+    override var directionActual: Double,
+    override var directionExpected: Double
+) : State.Journey.Player
 
 class StateJourneyTerritoryRegion(
     override val points: List<Point>,
@@ -47,13 +46,22 @@ class StateJourneyTerritory(
     override val regions: List<State.Journey.Territory.Region>
 ) : State.Journey.Territory
 
+class MutableDummy(
+    override val position: Point,
+    override val velocity: Double,
+    override var directionExpected: Double,
+    override var directionActual: Double
+) : Dummy
+
+class MutableStateJourneySnapshot(
+    override val dummy: MutableDummy
+) : State.Journey.Snapshot
+
 class MutableStateJourney(
-    override var territory: State.Journey.Territory
-) : State.Journey {
-    override val player: MutableStateJourneyPlayer = MutableStateJourneyPlayer(
-        position = MutablePoint(x = 0.0, y = 0.0)
-    )
-}
+    override var territory: State.Journey.Territory,
+    override val player: MutableStateJourneyPlayer,
+    override val snapshot: MutableStateJourneySnapshot
+) : State.Journey
 
 class MutableState(
     defaultCommon: State.Common
