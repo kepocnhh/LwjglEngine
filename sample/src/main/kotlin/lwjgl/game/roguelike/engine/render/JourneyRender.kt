@@ -1,15 +1,20 @@
 package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
+import lwjgl.game.roguelike.engine.util.calculateDistance
+import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
+import lwjgl.game.roguelike.engine.util.getNewPositionByDirection
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
+import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
+import kotlin.math.sqrt
 
 class JourneyRender(
-    fullPathFont: String,
-    pixelsPerUnit: Double
+    private val fullPathFont: String,
+    private val pixelsPerUnit: Double
 ) {
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit)
     private val playerRender = JourneyPlayerRender(
@@ -18,6 +23,107 @@ class JourneyRender(
     )
     private val movableRender: MovableRender = MovableRender(size = playerSize)
 
+    private fun debug(
+        canvas: Canvas,
+        journey: State.Journey,
+        center: Point,
+        dX: Double,
+        dY: Double
+    ) {
+        val p1: Point = journey.player.position
+        val playerPosition = point(
+            x = center.x - playerSize.width / 2,
+            y = center.y - playerSize.height /2
+        )
+        val points = journey.territory.regions.filter { !it.isPassable }.flatMap {
+            val result = mutableListOf<Pair<Point, Point>>()
+            var i = 0
+            val size = it.points.size
+            while (true) {
+                if (i == size) break
+                val next: Int = when (i) {
+                    size - 1 -> 0
+                    else -> i + 1
+                }
+                result.add(it.points[i] to it.points[next])
+                i++
+            }
+            result
+        }
+        val pointShortest = points.minBy { (p3, p4) ->
+            calculateDistance(
+                pointStart = p3,
+                pointFinish = p4,
+                point = p1
+            )
+        }
+        if (pointShortest != null) {
+            val (p3, p4) = pointShortest
+            val newPosition = getNewPositionByDirection(
+                oldPosition = journey.player.position,
+                units = journey.player.velocity,
+                direction = journey.player.directionExpected
+            )
+            val intersectionPoint = getIntersectionPointOrNull(
+                p1 = p1,
+                p2 = newPosition,
+                p3 = p3,
+                p4 = p4
+            )
+            if (intersectionPoint != null) {
+                canvas.drawLine(
+                    color = ColorEntity.GREEN,
+                    lineWidth = 1f,
+                    pointStart = center,
+                    pointFinish = point(
+                        x = intersectionPoint.x + dX,
+                        y = intersectionPoint.y + dY
+                    )
+                )
+                val distanceIntersection = calculateDistance(
+                    pointStart = p3,
+                    pointFinish = p4,
+                    point = p1
+                )
+                canvas.drawText(
+                    fullPathFont = fullPathFont,
+                    color = ColorEntity.GREEN,
+                    fontHeight = 14f,
+                    text = String.format("%.2f", distanceIntersection),
+                    pointTopLeft = point(x = 1 * pixelsPerUnit, y = 6 * pixelsPerUnit)
+                )
+            }
+            val distanceShortest = calculateDistance(
+                pointStart = p3,
+                pointFinish = p4,
+                point = p1
+            )
+            val color = if (distanceShortest < 17.677) {
+                ColorEntity.RED
+            } else {
+                ColorEntity.GREEN
+            }
+            canvas.drawText(
+                fullPathFont = fullPathFont,
+                color = color,
+                fontHeight = 14f,
+                text = String.format("%.2f", distanceShortest),
+                pointTopLeft = point(x = 1 * pixelsPerUnit, y = 5 * pixelsPerUnit)
+            )
+            canvas.drawLine(
+                color = ColorEntity.RED,
+                pointStart = point(
+                    x = dX + p3.x,
+                    y = dY + p3.y
+                ),
+                pointFinish = point(
+                    x = dX + p4.x,
+                    y = dY + p4.y
+                ),
+                lineWidth = 3f
+            )
+        }
+    }
     fun onRender(
         canvas: Canvas,
         journey: State.Journey,
@@ -29,7 +135,8 @@ class JourneyRender(
         canvas.drawRectangle(
             color = ColorEntity.WHITE,
             pointTopLeft = point(x = dX, y = dY),
-            size = journey.territory.size
+            size = journey.territory.size,
+            lineWidth = 1f
         )
         journey.territory.regions.forEach { region ->
             canvas.drawLineLoop(
@@ -55,5 +162,6 @@ class JourneyRender(
             player = journey.player,
             engineProperty = engineProperty
         )
+        debug(canvas, journey, center, dX, dY)
     }
 }

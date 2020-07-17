@@ -26,7 +26,8 @@ class JourneyPlayerRender(
             pointTopLeft = playerPosition,
             size = playerSize,
             direction = player.directionActual,
-            pointOfRotation = center
+            pointOfRotation = center,
+            lineWidth = 1f
         )
         canvas.drawLine(
             color = ColorEntity.RED,

@@ -13,6 +13,7 @@ import lwjgl.wrapper.window.WindowSize
 import lwjgl.wrapper.window.closeWindow
 import lwjgl.wrapper.window.loopWindow
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFWGamepadState
 import java.util.concurrent.atomic.AtomicBoolean
 
 private object MappingPS3 : EngineInputState.Joystick.Mapping {
@@ -236,34 +237,12 @@ private fun onJoystick(
         println("joystick #$joystickId id: $joystickGUID name: $joystickName / $gamepadName")
         joysticks[joystickId] = it
     }
-//    println("buttons: ${joystickButtons.mapIndexed { index, byte -> "$index:$byte"}.toList()}")
-//    println("axes: ${joystickAxes.toList()}")
-//    mapping.getBufferIndex(
-//        side = EngineInputState.Joystick.Mapping.Side.LEFT,
-//        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
-//    )?.also {
-//        mutableJoystick.joyLeft.x = joystickAxes[it].toDouble()
-//    }
     onJoystick(
         joystick = mutableJoystick,
         mapping = mapping,
         buttons = joystickButtons,
         axes = joystickAxes
     )
-//    mutableJoystick.joyLeft.isPressed = joystickButtons[8].toInt() == 1
-//    mutableJoystick.joyRight.isPressed = joystickButtons[9].toInt() == 1
-//    mutableJoystick.button.bumperLeft = joystickButtons[GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER].toInt() == 1
-//    mutableJoystick.button.bumperRight = joystickButtons[GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER].toInt() == 1
-//    EngineInputState.Joystick.Button.Interaction.values().forEach {
-//        mutableJoystick.button.interaction[it] = joystickButtons[it.toBufferIndex()].toInt() == 1
-//    }
-//    EngineInputState.Joystick.Button.Directional.values().forEach {
-//        mutableJoystick.button.directional[it] = joystickButtons[it.toBufferIndex()].toInt() == 1
-//    }
-//    EngineInputState.Joystick.Button.Main.values().forEach {
-//        mutableJoystick.button.main[it] = joystickButtons[it.toBufferIndex()].toInt() == 1
-//    }
-//    val joystickAxes = GLFW.glfwGetJoystickAxes(joystickId)
 }
 
 object Engine {
@@ -298,7 +277,7 @@ object Engine {
             },
             onRender = { windowId, canvas ->
                 val timeNowLogic = System.nanoTime().toDouble()
-                onJoysticks(mutableEngineInputState.joysticks)
+//                onJoysticks(mutableEngineInputState.joysticks) // todo
                 val pictureSize = glfwGetWindowSize(windowId)
                 logic.onUpdateState(
                     engineInputState = mutableEngineInputState,

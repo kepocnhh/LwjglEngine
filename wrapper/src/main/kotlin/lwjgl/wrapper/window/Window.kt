@@ -290,12 +290,14 @@ private class WindowCanvas(
     override fun drawRectangle(
         color: Color,
         pointTopLeft: Point,
-        size: Size
+        size: Size,
+        lineWidth: Float
     ) {
         val pointBottomRight = point(
             x = pointTopLeft.x + size.width,
             y = pointTopLeft.y + size.height
         )
+        GL11.glLineWidth(lineWidth)
         glColorOf(color)
         glTransaction(GL11.GL_LINE_LOOP) {
             glVertexOf(pointTopLeft)
@@ -309,6 +311,7 @@ private class WindowCanvas(
         color: Color,
         pointTopLeft: Point,
         size: Size,
+        lineWidth: Float,
         direction: Double,
         pointOfRotation: Point
     ) = glTransactionMatrix {
@@ -323,44 +326,7 @@ private class WindowCanvas(
 //            y = yP - yR - size.height / 2
             x = xP - xR,
             y = yP - yR
-        ), size)
-    }
-    private fun drawRectangle1(
-        color: Color,
-        pointTopLeft: Point,
-        size: Size,
-        direction: Double,
-        pointOfRotation: Point
-    ) = glTransactionMatrix {
-//        GL11.glTranslated(pointTopLeft.x, pointTopLeft.y, 0.0)
-        GL11.glTranslated(pointOfRotation.x, pointOfRotation.y, 0.0)
-//        GL11.glTranslated(pointOfRotation.x - pointTopLeft.x, pointOfRotation.y - pointTopLeft.y, 0.0)
-//        GL11.glTranslated(pointTopLeft.x + size.width / 2, pointTopLeft.y + size.height / 2, 0.0)
-        GL11.glRotated(direction, 0.0, 0.0, 1.0)
-//        GL11.glTranslated(0.0, 0.0, 0.0)
-//        GL11.glRotated(direction, pointTopLeft.x + size.width/2, pointTopLeft.y + size.height/2, 1.0)
-//        GL11.glRotated(direction, 0.5, 0.5, 1.0)
-//        glColorOf(color)
-//        GL11.glRotated(direction, pointTopLeft.x, pointTopLeft.y, 1.0)
-//        drawRectangle(color, pointTopLeft, size)
-//        drawRectangle(color, point(0, 0), size)
-//        val x = sqrt(size.width * size.width + size.height * size.height) / 2
-//        drawRectangle(color, point(x, 0.0), size)
-//        drawRectangle(color, point(size.width, size.height), size)
-//        drawRectangle(color, point(x = - size.width / 2, y = - size.height / 2), size)
-//        drawRectangle(color, point(
-//            x = pointTopLeft.x - size.width / 2,
-//            y = pointTopLeft.y - size.height / 2
-//        ), size)
-//        drawRectangle(color, point(
-//            x = pointOfRotation.x - pointTopLeft.x - size.width / 2,
-//            y = pointOfRotation.y - pointTopLeft.y - size.height / 2
-//        ), size)
-        drawRectangle(color, point(
-            x = pointOfRotation.x - pointTopLeft.x - size.width / 2,
-            y = - size.height / 2
-        ), size)
-//        GL11.glRectd(pointTopLeft.x, pointTopLeft.y, pointTopLeft.x + size.width, pointTopLeft.y + size.height)
+        ), size, lineWidth = lineWidth)
     }
 
     override fun drawText(

@@ -27,7 +27,8 @@ class MovableRender(
             pointTopLeft = relativePosition,
             size = size,
             direction = movable.directionActual,
-            pointOfRotation = position
+            pointOfRotation = position,
+            lineWidth = 1f
         )
         canvas.drawLine(
             color = color,
