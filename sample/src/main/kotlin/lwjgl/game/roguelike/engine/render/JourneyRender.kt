@@ -31,10 +31,6 @@ class JourneyRender(
         dY: Double
     ) {
         val p1: Point = journey.player.position
-        val playerPosition = point(
-            x = center.x - playerSize.width / 2,
-            y = center.y - playerSize.height /2
-        )
         val points = journey.territory.regions.filter { !it.isPassable }.flatMap {
             val result = mutableListOf<Pair<Point, Point>>()
             var i = 0
@@ -162,6 +158,6 @@ class JourneyRender(
             player = journey.player,
             engineProperty = engineProperty
         )
-        debug(canvas, journey, center, dX, dY)
+//        debug(canvas, journey, center, dX, dY)
     }
 }

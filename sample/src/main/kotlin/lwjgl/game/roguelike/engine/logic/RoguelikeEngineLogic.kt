@@ -207,133 +207,7 @@ object RoguelikeEngineLogic : EngineLogic {
     }
 
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
-//    private fun closerThan(
-//        points: List<Point>,
-//        x: Double,
-//        y: Double,
-//        distanceMin: Double
-//    ): Boolean {
-//        var i = 0
-//        val size = points.size
-//        while (true) {
-//            val next: Int = when (i) {
-//                size -> return false
-//                size - 1 -> 0
-//                else -> i + 1
-//            }
-//            val distanceActual = calculateDistance(
-//                pointStart = points[i],
-//                pointFinish = points[next],
-//                x = x,
-//                y = y
-//            )
-//            if (distanceActual < distanceMin) {
-//                return true
-//            }
-//            i++
-//        }
-//    }
 
-    private fun getIntersectionPointOrNullOld2(
-        p1: Point,
-        p2: Point,
-        p3: Point,
-        p4: Point
-    ): Point? {
-//        if (max(p1.x, p2.x) < p3.x && max(p1.x, p2.x) < p4.x) {
-//            println("catch max < x")
-//            return null
-//        }
-//        if (min(p1.x, p2.x) > p3.x && min(p1.x, p2.x) > p4.x) {
-//            println("catch max > x")
-//            return null
-//        }
-//        if (max(p1.y, p2.y) < p3.y && max(p1.y, p2.y) < p4.y) {
-//            println("catch max < y")
-//            return null
-//        }
-//        if (min(p1.y, p2.y) > p3.y && min(p1.y, p2.y) > p4.y) {
-//            println("catch max > y")
-//            return null
-//        }
-        val uBottom = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
-        if (uBottom == 0.0) {
-//            println("uBottom == 0")
-            return null
-        }
-        val uTopA = (p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)
-        val uA = uTopA / uBottom
-//        if (uA !in 0.0..1.0) {
-//            println("uA: $uA !in 0..1")
-//            return null
-//        }
-//        val uTopB = (p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)
-//        val uB = uTopB / uBottom
-//        if (uB !in 0.0..1.0) {
-//            println("uB: $uB !in 0..1")
-//            return null
-//        }
-//        println("uA: $uA")
-//        println("uA: $uA, uB: $uB")
-        val result = point(
-            x = p1.x + uA * (p2.x - p1.x),
-            y = p1.y + uA * (p2.y - p1.y)
-        )
-//        println("return: $result")
-        return result
-    }
-    private fun getIntersectionPointOrNullTest(
-        p1: Point,
-        p2: Point,
-        p3: Point,
-        p4: Point
-    ): Point? {
-        if (max(p1.x, p2.x) < p3.x && max(p1.x, p2.x) < p4.x ||
-            min(p1.x, p2.x) > p3.x && min(p1.x, p2.x) > p4.x ||
-            max(p1.y, p2.y) < p3.y && max(p1.y, p2.y) < p4.y ||
-            min(p1.y, p2.y) > p3.y && min(p1.y, p2.y) > p4.y) return null
-        val uBottom = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
-        if (uBottom == 0.0) return null
-        val uTopA = (p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)
-        val uA = uTopA / uBottom
-        if (uA !in 0.0..1.0) return null
-        val uTopB = (p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)
-        val uB = uTopB / uBottom
-        if (uB !in 0.0..1.0) return null
-        return point(
-            x = p1.x + uA * (p2.x - p1.x),
-            y = p1.y + uA * (p2.y - p1.y)
-        )
-    }
-    private fun onUpdateStatePlayerPositionByShortest(
-        journey: MutableStateJourney,
-        p2: Point,
-        p3: Point,
-        p4: Point,
-        distanceMin: Double
-    ) {
-        println("by -> Shortest")
-        val distanceShortest = calculateDistance(
-            pointStart = p3,
-            pointFinish = p4,
-            point = p2
-        )
-//        println("s: $distanceShortest")
-        if (distanceShortest < distanceMin) {
-            println("dM: $distanceMin dS: $distanceShortest")
-//                    val x = (distanceShortest * iPoint.x - distanceMin * (iPoint.x - newX)) / distanceShortest
-//                    val y = (distanceShortest * iPoint.y - distanceMin * (iPoint.y - newY)) / distanceShortest
-//                    journey.player.position.x = x
-//                    journey.player.position.y = y
-//                    journey.player.position.x = newX
-//                    journey.player.position.y = newY
-            // todo
-        } else {
-            journey.player.position.x = p2.x
-            journey.player.position.y = p2.y
-            return
-        }
-    }
     private fun onUpdateStatePlayerPositionByIntersection(
         journey: MutableStateJourney,
         p2: Point,
@@ -342,41 +216,39 @@ object RoguelikeEngineLogic : EngineLogic {
         iPoint: Point,
         distanceMin: Double
     ) {
-//        println("by -> Intersection")
         val p1: Point = journey.player.position
         val distanceNewShortest = calculateDistance(
             pointStart = p3,
             pointFinish = p4,
             point = p2
         )
-        println("distance new shortest: ${String.format("%.2f", distanceNewShortest)}")
-//        println("dS: $distanceShortest")
         if (distanceNewShortest >= distanceMin) {
-            println("d new S: ${String.format("%.2f", distanceNewShortest)} dM: ${String.format("%.2f", distanceMin)}")
+//
+//            (s,2) distanceNewShortest
+//            (s,m) distanceMin
+//
+//            3--s----i--4
+//               .   .
+//            ...m.......
+//               . .
+//               ..
+//               2
+//              /
+//             /
+//            1
+//
             journey.player.position.x = p2.x
             journey.player.position.y = p2.y
             return
         }
         val distanceIntersection = sqrt((iPoint.x - p1.x) * (iPoint.x - p1.x) + (iPoint.y - p1.y) * (iPoint.y - p1.y))
-        println("distance Intersection: ${String.format("%.2f", distanceIntersection)}")
         val distanceActual = sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y))
-        println("distance Actual: ${String.format("%.2f", distanceActual)}")
         if (distanceActual < distanceIntersection) {
-//            val x = (distanceShortest * iPoint.x - distanceMin * (iPoint.x - p2.x)) / distanceShortest
-//            val y = (distanceShortest * iPoint.y - distanceMin * (iPoint.y - p2.y)) / distanceShortest
-            println("p1: $p1")
-            println("p2: $p2")
-            println("p3: $p3")
-            println("p4: $p4")
-            println("pI: $iPoint")
-            println("dM: $distanceMin")
             val distanceShortest = calculateDistance(
                 pointStart = p3,
                 pointFinish = p4,
                 point = p1
             )
-            println("dS: $distanceShortest")
-            println("dI: $distanceIntersection")
             val x = (1 - distanceMin / distanceShortest) * (iPoint.x - p1.x) + p1.x
             val y = (1 - distanceMin / distanceShortest) * (iPoint.y - p1.y) + p1.y
             val newShortest = calculateDistance(
@@ -384,35 +256,56 @@ object RoguelikeEngineLogic : EngineLogic {
                 pointFinish = p4,
                 point = point(x = x, y = y)
             )
-            println("new x: $x y: $y")
-            println("new shortest: ${String.format("%.2f", newShortest)}")
+//
+//            (s,2) distanceNewShortest
+//            (s,m) distanceMin
+//            (1,i) distanceIntersection
+//            (1,2) distanceActual
+//            (1,d) distanceShortest
+//            (r,n) newShortest
+//
+//         3--d--n--s--i--4
+//            .  :  ! .
+//            .  :  !.
+//            .  :  2
+//            .  : /!
+//            .  :/ !
+//         ......r..m......
+//            . /
+//            ./
+//            1
+//
             if (newShortest < distanceMin) {
-                println("nS: $newShortest dM: $distanceMin")
-                println("nS: ${String.format("%.4f", newShortest)} dM: ${String.format("%.4f", distanceMin)}")
                 return
-//                if (newShortest * 1_000_000 < distanceMin.times(1_000_000).toInt()) {
-//                    println("nS: ${String.format("%.4f", newShortest)} dM: ${String.format("%.4f", distanceMin)}")
-//                    return
-//                }
             }
             journey.player.position.x = x
             journey.player.position.y = y
         } else {
-            println("dA: ${String.format("%.2f", distanceActual)} dI: ${String.format("%.2f", distanceIntersection)}")
-//                journey.player.position.x = iPoint.x
-//                journey.player.position.y = iPoint.y
-            // todo
+//
+//            (s,2) distanceNewShortest
+//            (s,m) distanceMin
+//            (1,i) distanceIntersection
+//            (1,2) distanceActual
+//
+//                     2
+//                    /'
+//                   / '
+//         3--d--n--i--s--4
+//            .  : /   !
+//            .  :/    !
+//         ......r.....m...
+//            . /
+//            ./
+//            1
+//
+//            todo
         }
     }
     private fun onUpdateStatePlayerPosition(
         journey: MutableStateJourney,
         newPosition: Point
     ) {
-        println("\n- - " + System.currentTimeMillis().toString())
         val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-//        println("distance min: ${String.format("%.2f", distanceMin)}")
-//        val distanceMin = playerSize.width / 2
-//        println("dM: $distanceMin")
         val territory = journey.territory
         val p1: Point = journey.player.position
         val p2: Point = newPosition
@@ -431,7 +324,6 @@ object RoguelikeEngineLogic : EngineLogic {
             }
             result
         }
-//        println(points)
         val pointsShortest = points.filter { (p3, p4) ->
             val distanceShortest = calculateDistance(
                 pointStart = p3,
@@ -440,8 +332,11 @@ object RoguelikeEngineLogic : EngineLogic {
             )
             distanceShortest < distanceMin
         }
-//        println(pointsShortest)
         if (pointsShortest.isEmpty()) {
+//               2
+//              /
+//             /
+//            1
             journey.player.position.x = newPosition.x
             journey.player.position.y = newPosition.y
         } else {
@@ -459,7 +354,6 @@ object RoguelikeEngineLogic : EngineLogic {
                 p4 = p4
             )
             if (intersectionPoint == null) {
-                println("by -> Intersection null")
                 // todo
             } else {
                 onUpdateStatePlayerPositionByIntersection(
@@ -473,50 +367,6 @@ object RoguelikeEngineLogic : EngineLogic {
             }
             // todo
         }
-        return
-        val intersection = points.mapNotNull { (p3, p4) ->
-            getIntersectionPointOrNull(
-                p1 = p1,
-                p2 = p2,
-                p3 = p3,
-                p4 = p4
-            )?.let {
-                Triple(p3, p4, it)
-            }
-        }.minBy { (_, _, it) ->
-            sqrt((it.x - p1.x) * (it.x - p1.x) + (it.y - p1.y) * (it.y - p1.y))
-        }
-        if (intersection == null) {
-            val pointShortest = points.minBy { (p3, p4) ->
-                calculateDistance(
-                    pointStart = p3,
-                    pointFinish = p4,
-                    point = p2
-                )
-            }
-            if (pointShortest == null) {
-                println("by -> Intersection/Shortest null")
-                journey.player.position.x = newPosition.x
-                journey.player.position.y = newPosition.y
-                return
-            }
-            onUpdateStatePlayerPositionByShortest(
-                journey = journey,
-                p2 = p2,
-                p3 = pointShortest.first,
-                p4 = pointShortest.second,
-                distanceMin = distanceMin
-            )
-        } else {
-            onUpdateStatePlayerPositionByIntersection(
-                journey = journey,
-                p2 = p2,
-                p3 = intersection.first,
-                p4 = intersection.second,
-                iPoint = intersection.third,
-                distanceMin = distanceMin
-            )
-        }
     }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
@@ -526,10 +376,12 @@ object RoguelikeEngineLogic : EngineLogic {
         dY: Double
     ) {
         val player = journey.player
-        val (oldX, oldY) = player.position
-        //
-        player.directionExpected = calculateAngle(oldX = oldX, oldY = oldY, newX = oldX + dX, newY = oldY + dY)
-        //
+        player.directionExpected = calculateAngle(
+            oldX = player.position.x,
+            oldY = player.position.y,
+            newX = player.position.x + dX,
+            newY = player.position.y + dY
+        )
         val newPosition = getNewPositionByDirection(
             oldPosition = player.position,
             units = player.velocity * velocityMultiple * dTime * pixelsPerUnit,
@@ -539,33 +391,6 @@ object RoguelikeEngineLogic : EngineLogic {
             journey = journey,
             newPosition = newPosition
         )
-        return // todo
-//        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-//        val territory = journey.territory
-//        val isMoveX = newX in distanceMin..(territory.size.width - distanceMin) && !territory.regions.any {
-//            !it.isPassable && closerThan(
-//                points = it.points,
-//                x = newX,
-//                y = oldY,
-//                distanceMin = distanceMin
-//            )
-//        }
-//        if (isMoveX) {
-//            player.position.x = newX
-//        }
-//
-//        val inTerritoryY = newY in distanceMin..(territory.size.height - distanceMin)
-//        val isMoveY = inTerritoryY && !territory.regions.any {
-//            !it.isPassable && closerThan(
-//                points = it.points,
-//                x = oldX,
-//                y = newY,
-//                distanceMin = distanceMin
-//            )
-//        }
-//        if (isMoveY) {
-//            player.position.y = newY
-//        }
     }
     private fun onUpdateStatePlayerPosition(
         dTime: Double,
