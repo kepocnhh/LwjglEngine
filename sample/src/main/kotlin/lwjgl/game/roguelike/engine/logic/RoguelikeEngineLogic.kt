@@ -11,8 +11,10 @@ import lwjgl.game.roguelike.engine.util.calculateAngle
 import lwjgl.game.roguelike.engine.util.calculateDistance
 import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
 import lwjgl.game.roguelike.engine.util.getNewPositionByDirection
+import lwjgl.game.roguelike.engine.util.getTriangleHeightPoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.game.roguelike.util.TimeUnit
+import lwjgl.game.roguelike.util.isLessThan
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.*
 import lwjgl.wrapper.util.glfw.key.KeyStatus
@@ -43,6 +45,16 @@ object RoguelikeEngineLogic : EngineLogic {
         StateJourneyTerritoryRegion(
             points = rect(leftTop = point(x = 3, y = 3), rightBottom = point(x = 7, y = 7)),
             color = ColorEntity.YELLOW,
+            isPassable = false
+        ),
+        StateJourneyTerritoryRegion(
+            points = listOf(
+                point(x = 10 + 0, y = 10 + 0),
+                point(x = 10 + 6, y = 10 + 3),
+                point(x = 10 - 1, y = 10 + 10),
+                point(x = 10 - 3, y = 10 + 6)
+            ),
+            color = ColorEntity.BLUE1,
             isPassable = false
         )
     )
@@ -223,6 +235,7 @@ object RoguelikeEngineLogic : EngineLogic {
             point = p2
         )
         if (distanceNewShortest >= distanceMin) {
+//            println("distanceNewShortest >= distanceMin")
 //
 //            (s,2) distanceNewShortest
 //            (s,m) distanceMin
@@ -241,8 +254,18 @@ object RoguelikeEngineLogic : EngineLogic {
             journey.player.position.y = p2.y
             return
         }
-        val distanceIntersection = sqrt((iPoint.x - p1.x) * (iPoint.x - p1.x) + (iPoint.y - p1.y) * (iPoint.y - p1.y))
-        val distanceActual = sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y))
+//        val distanceIntersection = sqrt((iPoint.x - p1.x) * (iPoint.x - p1.x) + (iPoint.y - p1.y) * (iPoint.y - p1.y))
+        val distanceIntersection = calculateDistance(
+            pointStart = p1,
+            pointFinish = iPoint
+        )
+//        val distanceActual = sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y))
+        val distanceActual = calculateDistance(
+            pointStart = p1,
+            pointFinish = p2
+        )
+        println("distanceActual $distanceActual")
+        println("distanceIntersection $distanceIntersection")
         if (distanceActual < distanceIntersection) {
             val distanceShortest = calculateDistance(
                 pointStart = p3,
@@ -251,10 +274,11 @@ object RoguelikeEngineLogic : EngineLogic {
             )
             val x = (1 - distanceMin / distanceShortest) * (iPoint.x - p1.x) + p1.x
             val y = (1 - distanceMin / distanceShortest) * (iPoint.y - p1.y) + p1.y
+            val r = point(x = x, y = y)
             val newShortest = calculateDistance(
                 pointStart = p3,
                 pointFinish = p4,
-                point = point(x = x, y = y)
+                point = r
             )
 //
 //            (s,2) distanceNewShortest
@@ -275,12 +299,30 @@ object RoguelikeEngineLogic : EngineLogic {
 //            ./
 //            1
 //
-            if (newShortest < distanceMin) {
+            if (newShortest.isLessThan(distanceMin, precision = 12)) {
+                println("newShortest >= distanceMin")
                 return
             }
-            journey.player.position.x = x
-            journey.player.position.y = y
+//            journey.player.position.x = x
+//            journey.player.position.y = y
+            val n = getTriangleHeightPoint(
+                baseStart = iPoint,
+                baseFinish = p3,
+                point = r
+            )
+            val s = getTriangleHeightPoint(
+                baseStart = iPoint,
+                baseFinish = n,
+                point = p2
+            )
+//            println("n: $n")
+//            println("s: $s")
+            val m = point(x = r.x + s.x - n.x, y = r.y + s.y - n.y)
+            println("m: $m")
+            journey.player.position.x = m.x
+            journey.player.position.y = m.y
         } else {
+            println("distanceActual >= distanceIntersection")
 //
 //            (s,2) distanceNewShortest
 //            (s,m) distanceMin
@@ -306,6 +348,7 @@ object RoguelikeEngineLogic : EngineLogic {
         newPosition: Point
     ) {
         val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
+//        val distanceMin = 50.0
         val territory = journey.territory
         val p1: Point = journey.player.position
         val p2: Point = newPosition
@@ -324,13 +367,26 @@ object RoguelikeEngineLogic : EngineLogic {
             }
             result
         }
-        val pointsShortest = points.filter { (p3, p4) ->
-            val distanceShortest = calculateDistance(
+//        val pointsShortest = points.filter { (p3, p4) ->
+//            val distanceShortest = calculateDistance(
+//                pointStart = p3,
+//                pointFinish = p4,
+//                point = p2
+//            )
+//            distanceShortest < distanceMin
+//        }
+        val group = points.groupBy { (p3, p4) ->
+            calculateDistance(
                 pointStart = p3,
                 pointFinish = p4,
                 point = p2
             )
-            distanceShortest < distanceMin
+        }
+        val distanceShortest = group.keys.minBy { it }!!
+        val pointsShortest = if (distanceShortest < distanceMin) {
+            group[distanceShortest]!!
+        } else {
+            emptyList()
         }
         if (pointsShortest.isEmpty()) {
 //               2
@@ -340,22 +396,35 @@ object RoguelikeEngineLogic : EngineLogic {
             journey.player.position.x = newPosition.x
             journey.player.position.y = newPosition.y
         } else {
-            val (p3, p4) = pointsShortest.minBy { (p3, p4) ->
-                calculateDistance(
-                    pointStart = p3,
-                    pointFinish = p4,
-                    point = p2
+            val results = pointsShortest.mapNotNull { (p3, p4) ->
+                getIntersectionPointOrNull(
+                    p1 = p1,
+                    p2 = p2,
+                    p3 = p3,
+                    p4 = p4
+                )?.let {
+                    Triple(p3, p4, it)
+                }
+            }.filter { (_, _, intersectionPoint) ->
+                val distanceIntersection = calculateDistance(
+                    pointStart = p1,
+                    pointFinish = intersectionPoint
                 )
-            }!!
-            val intersectionPoint = getIntersectionPointOrNull(
-                p1 = p1,
-                p2 = p2,
-                p3 = p3,
-                p4 = p4
-            )
-            if (intersectionPoint == null) {
+                val distanceActual = calculateDistance(
+                    pointStart = p1,
+                    pointFinish = p2
+                )
+                val distanceResult = calculateDistance(
+                    pointStart = p2,
+                    pointFinish = intersectionPoint
+                )
+                distanceResult < distanceIntersection && distanceActual < distanceIntersection
+            }
+            if (results.isEmpty()) {
+                println("results is empty")
                 // todo
-            } else {
+            } else if (results.size == 1) {
+                val (p3, p4, intersectionPoint) = results.firstOrNull()!!
                 onUpdateStatePlayerPositionByIntersection(
                     journey = journey,
                     p2 = p2,
@@ -364,8 +433,11 @@ object RoguelikeEngineLogic : EngineLogic {
                     iPoint = intersectionPoint,
                     distanceMin = distanceMin
                 )
+            } else {
+                println("results.size != 1")
+                println("results $results")
+                // todo
             }
-            // todo
         }
     }
     private fun onUpdateStatePlayerPosition(

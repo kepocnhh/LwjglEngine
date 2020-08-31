@@ -38,6 +38,29 @@ internal fun calculateDistance(
     )
 }
 
+internal fun calculateDistance(
+    xStart: Double,
+    yStart: Double,
+    xFinish: Double,
+    yFinish: Double
+): Double {
+    val dX = xFinish - xStart
+    val dY = yFinish - yStart
+    return sqrt(dY * dY + dX * dX)
+}
+
+internal fun calculateDistance(
+    pointStart: Point,
+    pointFinish: Point
+): Double {
+    return calculateDistance(
+        xStart = pointStart.x,
+        yStart = pointStart.y,
+        xFinish = pointFinish.x,
+        yFinish = pointFinish.y
+    )
+}
+
 internal fun getIntersectionPointOrNull(
     p1: Point,
     p2: Point,
@@ -70,4 +93,22 @@ internal fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Doub
     val angle = atan2(y = oldX - newX, x = oldY - newY)
     val degrees = angle * -180.0 / kotlin.math.PI
     return degrees + ceil(-degrees / 360.0) * 360.0
+}
+
+internal fun getTriangleHeightPoint(
+    baseStart: Point,
+    baseFinish: Point,
+    point: Point
+): Point {
+    if (baseStart.x == baseFinish.x) {
+        return point(x = baseStart.x, y = point.y)
+    }
+    if (baseStart.y == baseFinish.y) {
+        return point(x = point.x, y = baseStart.y) // todo
+    }
+    val k = (baseStart.y - baseFinish.y) / (baseStart.x - baseFinish.x)
+    val b1 = baseFinish.y - k * baseFinish.x
+    val b2 = point.y + point.x / k
+    val x = (b2 - b1) / (k + 1 / k)
+    return point(x = x, y = k * x + b1)
 }
