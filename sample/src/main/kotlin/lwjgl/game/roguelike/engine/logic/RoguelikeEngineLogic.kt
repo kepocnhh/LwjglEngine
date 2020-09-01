@@ -56,6 +56,15 @@ object RoguelikeEngineLogic : EngineLogic {
             ),
             color = ColorEntity.CYAN,
             isPassable = false
+        ),
+        StateJourneyTerritoryRegion(
+            points = listOf(
+                point(x = 10 - 6, y = 10 + 2),
+                point(x = 10 - 4, y = 10 + 6),
+                point(x = 10 - 9, y = 10 + 8)
+            ),
+            color = ColorEntity.GREEN,
+            isPassable = false
         )
     )
     private val defaultTerritory: State.Journey.Territory = defaultTerritoryRegions.let { regions ->
@@ -220,6 +229,36 @@ object RoguelikeEngineLogic : EngineLogic {
 
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
 
+    private fun isNewPositionAllowed(
+        regions: List<State.Journey.Territory.Region>,
+        distanceMin: Double,
+        newPosition: Point
+    ): Boolean {
+        val distanceShortest = allPoints(regions = regions).map { (p3, p4) ->
+            calculateDistance(
+                pointStart = p3,
+                pointFinish = p4,
+                point = newPosition
+            )
+        }.min() ?: return true
+        return !distanceShortest.isLessThan(distanceMin, precision = 12)
+    }
+    private fun proxySetNewPosition(
+        journey: MutableStateJourney,
+        distanceMin: Double,
+        newPosition: Point
+    ) {
+        if (isNewPositionAllowed(
+                regions = journey.territory.regions.filterNot { it.isPassable },
+                newPosition = newPosition,
+                distanceMin = distanceMin
+            )) {
+            journey.player.position.x = newPosition.x
+            journey.player.position.y = newPosition.y
+        } else {
+            println("new position $newPosition is not allowed")
+        }
+    }
     private fun onUpdateStatePlayerPositionByIntersection(
         journey: MutableStateJourney,
         p2: Point,
@@ -250,8 +289,11 @@ object RoguelikeEngineLogic : EngineLogic {
 //             /
 //            1
 //
-            journey.player.position.x = p2.x
-            journey.player.position.y = p2.y
+            proxySetNewPosition(
+                journey = journey,
+                distanceMin = distanceMin,
+                newPosition = p2
+            )
             return
         }
 //        val distanceIntersection = sqrt((iPoint.x - p1.x) * (iPoint.x - p1.x) + (iPoint.y - p1.y) * (iPoint.y - p1.y))
@@ -319,8 +361,11 @@ object RoguelikeEngineLogic : EngineLogic {
 //            println("s: $s")
             val m = point(x = r.x + s.x - n.x, y = r.y + s.y - n.y)
 //            println("m: $m")
-            journey.player.position.x = m.x
-            journey.player.position.y = m.y
+            proxySetNewPosition(
+                journey = journey,
+                distanceMin = distanceMin,
+                newPosition = m
+            )
         } else {
             println("distanceActual >= distanceIntersection")
 //
@@ -343,16 +388,8 @@ object RoguelikeEngineLogic : EngineLogic {
 //            todo
         }
     }
-    private fun onUpdateStatePlayerPosition(
-        journey: MutableStateJourney,
-        newPosition: Point
-    ) {
-        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-//        val distanceMin = 50.0
-        val territory = journey.territory
-        val p1: Point = journey.player.position
-        val p2: Point = newPosition
-        val points = territory.regions.filter { !it.isPassable }.flatMap {
+    private fun allPoints(regions: List<State.Journey.Territory.Region>): List<Pair<Point, Point>> {
+        return regions.flatMap {
             val result = mutableListOf<Pair<Point, Point>>()
             var i = 0
             val size = it.points.size
@@ -367,6 +404,17 @@ object RoguelikeEngineLogic : EngineLogic {
             }
             result
         }
+    }
+    private fun onUpdateStatePlayerPosition(
+        journey: MutableStateJourney,
+        newPosition: Point
+    ) {
+        val distanceMin = sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
+//        val distanceMin = 50.0
+        val territory = journey.territory
+        val p1: Point = journey.player.position
+        val p2: Point = newPosition
+        val points = allPoints(regions = territory.regions.filter { !it.isPassable })
 //        val pointsShortest = points.filter { (p3, p4) ->
 //            val distanceShortest = calculateDistance(
 //                pointStart = p3,
@@ -393,8 +441,11 @@ object RoguelikeEngineLogic : EngineLogic {
 //              /
 //             /
 //            1
-            journey.player.position.x = newPosition.x
-            journey.player.position.y = newPosition.y
+            proxySetNewPosition(
+                journey = journey,
+                distanceMin = distanceMin,
+                newPosition = newPosition
+            )
         } else {
             val results = pointsShortest.mapNotNull { (p3, p4) ->
                 getIntersectionPointOrNull(
@@ -433,8 +484,24 @@ object RoguelikeEngineLogic : EngineLogic {
                     iPoint = intersectionPoint,
                     distanceMin = distanceMin
                 )
+            } else if (results.size == 2) {
+                println("results.size == 2")
+                val (p3, p4, intersectionPoint) = results.maxBy { (_, _, intersectionPoint) ->
+                    calculateDistance(
+                        pointStart = p1,
+                        pointFinish = intersectionPoint
+                    )
+                }!!
+                onUpdateStatePlayerPositionByIntersection(
+                    journey = journey,
+                    p2 = p2,
+                    p3 = p3,
+                    p4 = p4,
+                    iPoint = intersectionPoint,
+                    distanceMin = distanceMin
+                )
             } else {
-                println("results.size != 1")
+                println("results.size > 2")
                 println("results $results")
                 // todo
             }
