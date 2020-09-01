@@ -104,7 +104,7 @@ internal fun getTriangleHeightPoint(
         return point(x = baseStart.x, y = point.y)
     }
     if (baseStart.y == baseFinish.y) {
-        return point(x = point.x, y = baseStart.y) // todo
+        return point(x = point.x, y = baseStart.y)
     }
     val k = (baseStart.y - baseFinish.y) / (baseStart.x - baseFinish.x)
     val b1 = baseFinish.y - k * baseFinish.x

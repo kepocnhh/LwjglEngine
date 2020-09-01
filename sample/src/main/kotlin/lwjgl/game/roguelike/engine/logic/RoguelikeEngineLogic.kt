@@ -54,7 +54,7 @@ object RoguelikeEngineLogic : EngineLogic {
                 point(x = 10 - 1, y = 10 + 10),
                 point(x = 10 - 3, y = 10 + 6)
             ),
-            color = ColorEntity.BLUE1,
+            color = ColorEntity.CYAN,
             isPassable = false
         )
     )
@@ -264,8 +264,8 @@ object RoguelikeEngineLogic : EngineLogic {
             pointStart = p1,
             pointFinish = p2
         )
-        println("distanceActual $distanceActual")
-        println("distanceIntersection $distanceIntersection")
+//        println("distanceActual $distanceActual")
+//        println("distanceIntersection $distanceIntersection")
         if (distanceActual < distanceIntersection) {
             val distanceShortest = calculateDistance(
                 pointStart = p3,
@@ -306,19 +306,19 @@ object RoguelikeEngineLogic : EngineLogic {
 //            journey.player.position.x = x
 //            journey.player.position.y = y
             val n = getTriangleHeightPoint(
-                baseStart = iPoint,
-                baseFinish = p3,
+                baseStart = p3,
+                baseFinish = p4,
                 point = r
             )
+//            println("n: $n")
             val s = getTriangleHeightPoint(
-                baseStart = iPoint,
-                baseFinish = n,
+                baseStart = p3,
+                baseFinish = p4,
                 point = p2
             )
-//            println("n: $n")
 //            println("s: $s")
             val m = point(x = r.x + s.x - n.x, y = r.y + s.y - n.y)
-            println("m: $m")
+//            println("m: $m")
             journey.player.position.x = m.x
             journey.player.position.y = m.y
         } else {

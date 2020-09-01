@@ -9,7 +9,7 @@ object ColorEntity {
     val YELLOW = color(MAX_VALUE, MAX_VALUE, MIN_VALUE)
     val GREEN = color(MIN_VALUE, MAX_VALUE, MIN_VALUE)
     val BLUE = color(MIN_VALUE, MIN_VALUE, MAX_VALUE)
-    val BLUE1 = color(MIN_VALUE, MAX_VALUE, MAX_VALUE)
+    val CYAN = color(MIN_VALUE, MAX_VALUE, MAX_VALUE)
     val WHITE = color(MAX_VALUE, MAX_VALUE, MAX_VALUE)
     val TRANSPARENT = color(MIN_VALUE, MIN_VALUE, MIN_VALUE, alpha = MIN_VALUE)
 }
