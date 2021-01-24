@@ -17,7 +17,6 @@ interface EngineInputState {
         interface Joy {
             val x: Double
             val y: Double
-            val isPressed: Boolean
         }
 
         interface Pad {
@@ -28,6 +27,7 @@ interface EngineInputState {
                 LEFT,
                 MAIN,
                 BUMPER,
+                JOY,
             }
 
             val triggerPosition: Double
@@ -35,8 +35,7 @@ interface EngineInputState {
             fun isPressed(button: Button): Boolean
         }
 
-        val leftPad: Pad
-        val rightPad: Pad
+        val pads: Map<Mapping.Side, Pad>
 
         interface Mapping {
             enum class Side {
@@ -47,13 +46,8 @@ interface EngineInputState {
                 JOY_Y,
                 TRIGGER_POSITION,
             }
-            enum class BooleanType {
-                JOY_PRESSED,
-                BUMPER_PRESSED,
-            }
             fun getBufferIndex(side: Side, type: ValueType): Int?
-            fun getBufferIndex(side: Side, type: BooleanType): Int?
-            fun getBufferIndex(button: Pad.Button): Int?
+            fun getBufferIndex(side: Side, button: Pad.Button): Int?
         }
     }
     val joysticks: List<Joystick?>

@@ -578,8 +578,9 @@ object RoguelikeEngineLogic : EngineLogic {
 //        val min = 0.25
         val min = 0.1
 //        val min = 0.025
-        val joyLeftX = joystick.leftPad.joy.x
-        val joyLeftY = joystick.leftPad.joy.y
+        val pad = joystick.pads[EngineInputState.Joystick.Mapping.Side.LEFT] ?: TODO()
+        val joyLeftX = pad.joy.x
+        val joyLeftY = pad.joy.y
         when {
             joyLeftX.absoluteValue < min && joyLeftY.absoluteValue < min -> return
             joyLeftX.absoluteValue < min -> {

@@ -37,15 +37,12 @@ private object MappingPS3 : EngineInputState.Joystick.Mapping {
 
     override fun getBufferIndex(
         side: EngineInputState.Joystick.Mapping.Side,
-        type: EngineInputState.Joystick.Mapping.BooleanType
+        button: EngineInputState.Joystick.Pad.Button
     ): Int? {
         TODO()
     }
-
-    override fun getBufferIndex(button: EngineInputState.Joystick.Pad.Button): Int? {
-        TODO()
-    }
 }
+
 private object MappingPS4 : EngineInputState.Joystick.Mapping {
     override fun getBufferIndex(
         side: EngineInputState.Joystick.Mapping.Side,
@@ -67,13 +64,74 @@ private object MappingPS4 : EngineInputState.Joystick.Mapping {
 
     override fun getBufferIndex(
         side: EngineInputState.Joystick.Mapping.Side,
-        type: EngineInputState.Joystick.Mapping.BooleanType
+        button: EngineInputState.Joystick.Pad.Button
     ): Int? {
-        TODO()
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 14
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 15
+                EngineInputState.Joystick.Pad.Button.DOWN -> 16
+                EngineInputState.Joystick.Pad.Button.LEFT -> 17
+                EngineInputState.Joystick.Pad.Button.MAIN -> 8
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 4
+                EngineInputState.Joystick.Pad.Button.JOY -> 10
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 3
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 2
+                EngineInputState.Joystick.Pad.Button.DOWN -> 1
+                EngineInputState.Joystick.Pad.Button.LEFT -> 0
+                EngineInputState.Joystick.Pad.Button.MAIN -> 9
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 5
+                EngineInputState.Joystick.Pad.Button.JOY -> 11
+            }
+        }
+    }
+}
+
+private object MappingXBoxSeries : EngineInputState.Joystick.Mapping {
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        type: EngineInputState.Joystick.Mapping.ValueType
+    ): Int? {
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 0
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 1
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 5
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (type) {
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 2
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 3
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 4
+            }
+        }
     }
 
-    override fun getBufferIndex(button: EngineInputState.Joystick.Pad.Button): Int? {
-        TODO()
+    override fun getBufferIndex(
+        side: EngineInputState.Joystick.Mapping.Side,
+        button: EngineInputState.Joystick.Pad.Button
+    ): Int? {
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 16
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 17
+                EngineInputState.Joystick.Pad.Button.DOWN -> 18
+                EngineInputState.Joystick.Pad.Button.LEFT -> 19
+                EngineInputState.Joystick.Pad.Button.MAIN -> 10
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 6
+                EngineInputState.Joystick.Pad.Button.JOY -> 13
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 4
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 1
+                EngineInputState.Joystick.Pad.Button.DOWN -> 0
+                EngineInputState.Joystick.Pad.Button.LEFT -> 3
+                EngineInputState.Joystick.Pad.Button.MAIN -> 11
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 7
+                EngineInputState.Joystick.Pad.Button.JOY -> 14
+            }
+        }
     }
 }
 
@@ -93,7 +151,7 @@ private class MutableEngineInputKeyboardState : EngineInputState.Keyboard {
 private class MutableEngineInputJoystickPad(
     override var triggerPosition: Double
 ) : EngineInputState.Joystick.Pad {
-    override val joy: MutableJoy = MutableJoy(x = 0.0, y = 0.0, isPressed = false)
+    override val joy: MutableJoy = MutableJoy(x = 0.0, y = 0.0)
     val buttons = mutableMapOf<EngineInputState.Joystick.Pad.Button, Boolean>()
     override fun isPressed(button: EngineInputState.Joystick.Pad.Button): Boolean {
         return buttons[button] ?: false
@@ -104,14 +162,15 @@ private class MutableEngineInputJoystickState(
     override val id: String,
     override val name: String
 ) : EngineInputState.Joystick {
-    override val leftPad: MutableEngineInputJoystickPad = MutableEngineInputJoystickPad(triggerPosition = 0.0)
-    override val rightPad: MutableEngineInputJoystickPad = MutableEngineInputJoystickPad(triggerPosition = 0.0)
+    override val pads: Map<EngineInputState.Joystick.Mapping.Side, MutableEngineInputJoystickPad> =
+        EngineInputState.Joystick.Mapping.Side.values().map {
+            it to MutableEngineInputJoystickPad(triggerPosition = 0.0)
+        }.toMap()
 }
 
 private class MutableJoy(
     override var x: Double,
-    override var y: Double,
-    override var isPressed: Boolean
+    override var y: Double
 ) : EngineInputState.Joystick.Joy
 
 private class MutableEngineInputState: EngineInputState {
@@ -156,44 +215,47 @@ private fun onJoystick(
     buttons: ByteArray,
     axes: FloatArray
 ) {
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.LEFT,
-        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
-    )?.also {
-        joystick.leftPad.joy.x = axes[it].toDouble()
-    }
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.LEFT,
-        type = EngineInputState.Joystick.Mapping.ValueType.JOY_Y
-    )?.also {
-        joystick.leftPad.joy.y = axes[it].toDouble()
-    }
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
-        type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
-    )?.also {
-        joystick.rightPad.joy.x = axes[it].toDouble()
-    }
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
-        type = EngineInputState.Joystick.Mapping.ValueType.JOY_Y
-    )?.also {
-        joystick.rightPad.joy.y = axes[it].toDouble()
-    }
-
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.LEFT,
-        type = EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION
-    )?.also {
-        joystick.leftPad.triggerPosition = axes[it].toDouble()
-    }
-    mapping.getBufferIndex(
-        side = EngineInputState.Joystick.Mapping.Side.RIGHT,
-        type = EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION
-    )?.also {
-        joystick.rightPad.triggerPosition = axes[it].toDouble()
+    println("""
+        +
+        buttons ${buttons.toList()}
+        axes ${axes.toList()}
+        -
+    """.trimIndent())
+    EngineInputState.Joystick.Mapping.Side.values().forEach { side ->
+        val pad = joystick.pads[side] ?: TODO()
+        mapping.getBufferIndex(
+            side = side,
+            type = EngineInputState.Joystick.Mapping.ValueType.JOY_X
+        )?.also {
+            pad.joy.x = axes[it].toDouble()
+        }
+        mapping.getBufferIndex(
+            side = side,
+            type = EngineInputState.Joystick.Mapping.ValueType.JOY_Y
+        )?.also {
+            pad.joy.y = axes[it].toDouble()
+        }
+        mapping.getBufferIndex(
+            side = side,
+            type = EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION
+        )?.also {
+            pad.triggerPosition = axes[it].toDouble()
+        }
+        EngineInputState.Joystick.Pad.Button.values().forEach { button ->
+            mapping.getBufferIndex(
+                side = side,
+                button = button
+            )?.also {
+                pad.buttons[button] = buttons[it].toInt() == 1
+            }
+        }
     }
 }
+
+private enum class JoystickGUID(val value: String) {
+    XBOX_SERIES_CONTROLLER(value = "030000005e040000130b000001050000")
+}
+
 private fun onJoystick(
     joystickId: Int,
     joysticks: MutableList<MutableEngineInputJoystickState?>
@@ -202,7 +264,13 @@ private fun onJoystick(
     val joystickGUID = GLFW.glfwGetJoystickGUID(joystickId)
     val joystickName = GLFW.glfwGetJoystickName(joystickId)
     val gamepadName = GLFW.glfwGetGamepadName(joystickId)
-    val mapping = gamepadName?.let {
+    val mapping = joystickGUID?.let { guid ->
+        JoystickGUID.values().firstOrNull { it.value == guid }?.let {
+            when (it) {
+                JoystickGUID.XBOX_SERIES_CONTROLLER -> MappingXBoxSeries
+            }
+        }
+    } ?: gamepadName?.let {
         when {
             it.contains("PS4") -> MappingPS4
             it.contains("PS3") -> MappingPS3
@@ -277,7 +345,7 @@ object Engine {
             },
             onRender = { windowId, canvas ->
                 val timeNowLogic = System.nanoTime().toDouble()
-//                onJoysticks(mutableEngineInputState.joysticks) // todo
+                onJoysticks(mutableEngineInputState.joysticks) // todo
                 val pictureSize = glfwGetWindowSize(windowId)
                 logic.onUpdateState(
                     engineInputState = mutableEngineInputState,
