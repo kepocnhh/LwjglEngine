@@ -13,7 +13,6 @@ import lwjgl.wrapper.window.WindowSize
 import lwjgl.wrapper.window.closeWindow
 import lwjgl.wrapper.window.loopWindow
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.glfw.GLFWGamepadState
 import java.util.concurrent.atomic.AtomicBoolean
 
 private object MappingPS3 : EngineInputState.Joystick.Mapping {

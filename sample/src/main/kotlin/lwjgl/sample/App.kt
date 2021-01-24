@@ -94,17 +94,39 @@ object KeyboardEngineLogic : EngineLogic {
             keys.forEachIndexed { x, key ->
                 val status = engineInputState.keyboard.printableKeys[key]
                 if (status != null) {
-                    val isPressed = if(status == KeyStatus.PRESS) "+" else "-"
-                    val text = key.name + isPressed
                     canvas.drawText(
                         fullPathFont = fullPathFontMain,
-                        color = ColorEntity.RED,
+                        color = if (status == KeyStatus.PRESS) ColorEntity.YELLOW else ColorEntity.GREEN,
                         pointTopLeft = point(25 + 25 * x, 25 + 25 * y),
-                        text = text,
+                        text = key.name,
                         fontHeight = 16f
                     )
                 }
             }
+        }
+        for (key in FunctionKey.values()) {
+            val x: Int
+            val y: Int
+            if (key == FunctionKey.ESCAPE) continue
+            when (key) {
+                FunctionKey.ENTER -> {
+                    x = 300
+                    y = 50
+                }
+                FunctionKey.SPACE -> {
+                    x = 150
+                    y = 100
+                }
+                FunctionKey.ESCAPE -> TODO()
+            }
+            val status = engineInputState.keyboard.functionKeys[key]
+            canvas.drawText(
+                fullPathFont = fullPathFontMain,
+                color = if (status == KeyStatus.PRESS) ColorEntity.YELLOW else ColorEntity.GREEN,
+                pointTopLeft = point(x, y),
+                text = key.name,
+                fontHeight = 16f
+            )
         }
     }
 }
@@ -241,7 +263,7 @@ object JoystickEngineLogic : EngineLogic {
 
 fun main() {
     println("Hello LWJGL " + Version.getVersion() + "!")
-    Engine.run(JoystickEngineLogic)
-//    Engine.run(KeyboardEngineLogic)
+//    Engine.run(JoystickEngineLogic)
+    Engine.run(KeyboardEngineLogic)
 //    Engine.run(RoguelikeEngineLogic)
 }
