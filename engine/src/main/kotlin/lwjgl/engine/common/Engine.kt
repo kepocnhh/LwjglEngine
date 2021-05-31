@@ -24,12 +24,12 @@ private object MappingPS3 : EngineInputState.Joystick.Mapping {
             EngineInputState.Joystick.Mapping.Side.LEFT -> when (type) {
                 EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 0
                 EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 1
-                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> null
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 2
             }
             EngineInputState.Joystick.Mapping.Side.RIGHT -> when (type) {
-                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 2
-                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 3
-                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> null
+                EngineInputState.Joystick.Mapping.ValueType.JOY_X -> 3
+                EngineInputState.Joystick.Mapping.ValueType.JOY_Y -> 4
+                EngineInputState.Joystick.Mapping.ValueType.TRIGGER_POSITION -> 5
             }
         }
     }
@@ -38,7 +38,27 @@ private object MappingPS3 : EngineInputState.Joystick.Mapping {
         side: EngineInputState.Joystick.Mapping.Side,
         button: EngineInputState.Joystick.Pad.Button
     ): Int? {
-        TODO()
+        return when (side) {
+            EngineInputState.Joystick.Mapping.Side.LEFT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 13
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 16
+                EngineInputState.Joystick.Pad.Button.DOWN -> 14
+                EngineInputState.Joystick.Pad.Button.LEFT -> 15
+                EngineInputState.Joystick.Pad.Button.MAIN -> 8
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 4
+                EngineInputState.Joystick.Pad.Button.JOY -> 11
+            }
+            EngineInputState.Joystick.Mapping.Side.RIGHT -> when (button) {
+                EngineInputState.Joystick.Pad.Button.UP -> 2
+                EngineInputState.Joystick.Pad.Button.RIGHT -> 1
+                EngineInputState.Joystick.Pad.Button.DOWN -> 0
+                EngineInputState.Joystick.Pad.Button.LEFT -> 3
+                EngineInputState.Joystick.Pad.Button.MAIN -> 9
+                EngineInputState.Joystick.Pad.Button.BUMPER -> 5
+                EngineInputState.Joystick.Pad.Button.JOY -> 12
+            }
+        }
+ 
     }
 }
 
@@ -251,8 +271,11 @@ private fun onJoystick(
     }
 }
 
-private enum class JoystickGUID(val value: String) {
-    XBOX_SERIES_CONTROLLER(value = "030000005e040000130b000001050000")
+private enum class JoystickGUID(val values: Set<String>) {
+    XBOX_SERIES_CONTROLLER(values = setOf(
+        "030000005e040000130b000001050000",
+        "050000005e040000130b000005050000"
+    ))
 }
 
 private fun onJoystick(
@@ -260,11 +283,15 @@ private fun onJoystick(
     joysticks: MutableList<MutableEngineInputJoystickState?>
 ) {
     val isJoystickPresent = GLFW.glfwJoystickPresent(joystickId)
+//    println("Joystick $joystickId is present: $isJoystickPresent")
     val joystickGUID = GLFW.glfwGetJoystickGUID(joystickId)
+//    println("Joystick $joystickId GUID \"$joystickGUID\"")
     val joystickName = GLFW.glfwGetJoystickName(joystickId)
+//    println("Joystick $joystickId name \"$joystickName\"")
     val gamepadName = GLFW.glfwGetGamepadName(joystickId)
+//    println("Joystick $joystickId gamepad name \"$gamepadName\"")
     val mapping = joystickGUID?.let { guid ->
-        JoystickGUID.values().firstOrNull { it.value == guid }?.let {
+        JoystickGUID.values().firstOrNull { it.values.contains(guid) }?.let {
             when (it) {
                 JoystickGUID.XBOX_SERIES_CONTROLLER -> MappingXBoxSeries
             }

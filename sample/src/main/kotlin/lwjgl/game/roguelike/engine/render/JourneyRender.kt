@@ -77,7 +77,7 @@ class JourneyRender(
 //             /
 //            1
         } else {
-            val (p3, p4) = pointsShortest.minBy { (p3, p4) ->
+            val (p3, p4) = pointsShortest.minByOrNull { (p3, p4) ->
                 calculateDistance(
                     pointStart = p3,
                     pointFinish = p4,

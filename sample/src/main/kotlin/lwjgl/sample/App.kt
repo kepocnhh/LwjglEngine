@@ -264,6 +264,6 @@ object JoystickEngineLogic : EngineLogic {
 fun main() {
     println("Hello LWJGL " + Version.getVersion() + "!")
 //    Engine.run(JoystickEngineLogic)
-    Engine.run(KeyboardEngineLogic)
-//    Engine.run(RoguelikeEngineLogic)
+//    Engine.run(KeyboardEngineLogic)
+    Engine.run(RoguelikeEngineLogic)
 }

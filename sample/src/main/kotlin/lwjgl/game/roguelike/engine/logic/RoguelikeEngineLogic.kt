@@ -71,8 +71,8 @@ object RoguelikeEngineLogic : EngineLogic {
         val points = regions.flatMap { it.points }
         StateJourneyTerritory(
             size = size(
-                width = points.maxBy { it.x }!!.x,
-                height = points.maxBy { it.y }!!.y
+                width = points.maxOfOrNull { it.x }!!,
+                height = points.maxOfOrNull { it.y }!!
             ),
             regions = regions
         )
@@ -240,7 +240,7 @@ object RoguelikeEngineLogic : EngineLogic {
                 pointFinish = p4,
                 point = newPosition
             )
-        }.min() ?: return true
+        }.minOrNull() ?: return true
         return !distanceShortest.isLessThan(distanceMin, precision = 12)
     }
     private fun proxySetNewPosition(
@@ -430,7 +430,7 @@ object RoguelikeEngineLogic : EngineLogic {
                 point = p2
             )
         }
-        val distanceShortest = group.keys.minBy { it }!!
+        val distanceShortest = group.keys.minByOrNull { it }!!
         val pointsShortest = if (distanceShortest < distanceMin) {
             group[distanceShortest]!!
         } else {
@@ -486,10 +486,10 @@ object RoguelikeEngineLogic : EngineLogic {
                 )
             } else if (results.size == 2) {
                 println("results.size == 2")
-                val (p3, p4, intersectionPoint) = results.maxBy { (_, _, intersectionPoint) ->
+                val (p3, p4, intersectionPoint) = results.maxByOrNull { (_, _, intersectionPoint) ->
                     calculateDistance(
-                        pointStart = p1,
-                        pointFinish = intersectionPoint
+                            pointStart = p1,
+                            pointFinish = intersectionPoint
                     )
                 }!!
                 onUpdateStatePlayerPositionByIntersection(
