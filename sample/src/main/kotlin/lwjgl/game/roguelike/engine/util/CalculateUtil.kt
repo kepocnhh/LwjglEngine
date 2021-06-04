@@ -1,8 +1,11 @@
 package lwjgl.game.roguelike.engine.util
 
+import lwjgl.game.roguelike.util.isLessThan
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import kotlin.math.*
+import lwjgl.wrapper.entity.Line
+import lwjgl.wrapper.entity.update
 
 internal fun calculateDistance(
     xStart: Double,
@@ -23,7 +26,7 @@ internal fun calculateDistance(
     return shortest
 }
 
-internal fun calculateDistance(
+private fun calculateDistance(
     pointStart: Point,
     pointFinish: Point,
     point: Point
@@ -39,6 +42,17 @@ internal fun calculateDistance(
 }
 
 internal fun calculateDistance(
+    line: Line,
+    point: Point
+): Double {
+    return calculateDistance(
+        pointStart = line.start,
+        pointFinish = line.finish,
+        point = point
+    )
+}
+
+private fun calculateDistance(
     xStart: Double,
     yStart: Double,
     xFinish: Double,
@@ -61,7 +75,7 @@ internal fun calculateDistance(
     )
 }
 
-internal fun getIntersectionPointOrNull(
+private fun getIntersectionPointOrNull(
     p1: Point,
     p2: Point,
     p3: Point,
@@ -77,15 +91,25 @@ internal fun getIntersectionPointOrNull(
     )
 }
 
+internal fun getIntersectionPointOrNull(
+    p1: Point,
+    p2: Point,
+    line: Line
+): Point? {
+    return getIntersectionPointOrNull(
+        p1 = p1, p2 = p2, p3 = line.start, p4 = line.finish
+    )
+}
+
 internal fun getNewPositionByDirection(
     oldPosition: Point,
     units: Double,
     direction: Double
 ): Point {
     val radians = Math.toRadians(direction)
-    return point(
-        x = oldPosition.x + units * sin(radians),
-        y = oldPosition.y - units * cos(radians)
+    return oldPosition.update(
+        dX = units * sin(radians),
+        dY = - units * cos(radians)
     )
 }
 
@@ -96,6 +120,17 @@ internal fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Doub
 }
 
 internal fun getTriangleHeightPoint(
+    line: Line,
+    point: Point
+): Point {
+    return getTriangleHeightPoint(
+        baseStart = line.start,
+        baseFinish = line.finish,
+        point = point
+    )
+}
+
+private fun getTriangleHeightPoint(
     baseStart: Point,
     baseFinish: Point,
     point: Point
@@ -111,4 +146,18 @@ internal fun getTriangleHeightPoint(
     val b2 = point.y + point.x / k
     val x = (b2 - b1) / (k + 1 / k)
     return point(x = x, y = k * x + b1)
+}
+
+internal fun isNewPositionAllowed(
+    lines: List<Line>,
+    distanceMin: Double,
+    newPosition: Point
+): Boolean {
+    val distanceShortest = lines.map {
+        calculateDistance(
+            line = it,
+            point = newPosition
+        )
+    }.minOrNull() ?: return true
+    return !distanceShortest.isLessThan(distanceMin, precision = 12)
 }

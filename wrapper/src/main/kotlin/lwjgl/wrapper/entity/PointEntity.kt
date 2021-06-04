@@ -35,3 +35,13 @@ fun point(
         y = y.toDouble()
     )
 }
+
+fun Point.update(
+    dX: Double,
+    dY: Double
+): Point {
+    return point(
+        x = x + dX,
+        y = y + dY
+    )
+}
