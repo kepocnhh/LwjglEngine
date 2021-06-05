@@ -14,7 +14,9 @@ import org.lwjgl.stb.*
 import org.lwjgl.system.MemoryUtil
 import java.io.FileInputStream
 import java.io.PrintStream
+import java.nio.IntBuffer
 import kotlin.math.absoluteValue
+import org.lwjgl.system.MemoryStack
 
 interface FontRender {
     fun drawText(
@@ -23,6 +25,26 @@ interface FontRender {
         pointTopLeft: Point,
         color: Color,
         text: CharSequence
+    )
+
+    fun getTextWidth(
+        fullPathFont: String,
+        fontHeight: Float,
+        text: CharSequence, from: Int, to: Int
+    ): Double
+}
+
+fun FontRender.getTextWidth(
+    fullPathFont: String,
+    fontHeight: Float,
+    text: CharSequence
+): Double {
+    return getTextWidth(
+        fullPathFont = fullPathFont,
+        fontHeight = fontHeight,
+        text = text,
+        from = 0,
+        to = text.length
     )
 }
 
@@ -38,7 +60,8 @@ private class FontInfo(
     val textureId: Int,
     val lineHeight: Float,
     val fontHeight: Float,
-    val charBuffer: STBTTPackedchar.Buffer
+    val charBuffer: STBTTPackedchar.Buffer,
+    val info: STBTTFontinfo
 )
 
 private val mapFontInfo = mutableMapOf<String, FontInfo>()
@@ -180,7 +203,8 @@ private class AdvancedFontRender: FontRender {
             textureId = textureId,
             lineHeight = lineHeight,
             fontHeight = fontHeight,
-            charBuffer = charBuffer
+            charBuffer = charBuffer,
+            info = fontInfo
         )
     }
 
@@ -196,6 +220,45 @@ private class AdvancedFontRender: FontRender {
             mapFontInfo[fontKey] = it
         }
         drawText(fontInfo, pointTopLeft, color, text)
+    }
+
+    private fun getCodePoint(
+        text: CharSequence,
+        to: Int,
+        i: Int,
+        cpOut: IntBuffer
+    ): Int {
+        val c1 = text[i]
+        if (Character.isHighSurrogate(c1) && i + 1 < to) {
+            val c2 = text[i + 1]
+            if (Character.isLowSurrogate(c2)) {
+                cpOut.put(0, Character.toCodePoint(c1, c2))
+                return 2
+            }
+        }
+        cpOut.put(0, c1.code)
+        return 1
+    }
+    // https://github.com/LWJGL/lwjgl3/blob/7ef51d1054aa4647bc8aafcfd3d93c6a6ad1410f/modules/samples/src/test/java/org/lwjgl/demo/stb/Truetype.java#L219
+    override fun getTextWidth(fullPathFont: String, fontHeight: Float, text: CharSequence, from: Int, to: Int): Double {
+        val fontKey = fullPathFont + "_" + fontHeight
+        val fontInfo = mapFontInfo[fontKey] ?: createFrontInfo(fullPathFont, fontHeight).also {
+            mapFontInfo[fontKey] = it
+        }
+        var result = 0.0
+        MemoryStack.stackPush().use {
+            val pCodePoint       = it.mallocInt(1)
+            val pAdvancedWidth   = it.mallocInt(1)
+            val pLeftSideBearing = it.mallocInt(1)
+            var i = from
+            while (i < to) {
+                i += getCodePoint(text, to, i, pCodePoint)
+                val cp = pCodePoint.get(0)
+                STBTruetype.stbtt_GetCodepointHMetrics(fontInfo.info, cp, pAdvancedWidth, pLeftSideBearing)
+                result += pAdvancedWidth.get(0)
+            }
+        }
+        return result * STBTruetype.stbtt_ScaleForPixelHeight(fontInfo.info, fontHeight)
     }
 }
 

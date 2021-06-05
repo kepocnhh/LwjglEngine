@@ -46,4 +46,11 @@ interface Canvas {
         color: Color,
         text: CharSequence
     )
+    fun drawByText(
+        fullPathFont: String,
+        fontHeight: Float,
+        color: Color,
+        text: CharSequence,
+        onDraw: (width: Double) -> /*pointTopLeft*/ Point
+    )
 }

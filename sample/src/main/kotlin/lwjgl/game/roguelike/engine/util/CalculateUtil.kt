@@ -161,3 +161,55 @@ internal fun isNewPositionAllowed(
     }.minOrNull() ?: return true
     return !distanceShortest.isLessThan(distanceMin, precision = 12)
 }
+
+/**
+ * y' - - - -*
+ * y - - - -/- -*
+ *         /  / |
+ *        /a/   |
+ * yr - -*   |  |
+ *       |   |  |
+ *      xr   x' x
+ */
+internal fun rotatePoint(
+    x: Double,
+    y: Double,
+    xRotationOf: Double,
+    yRotationOf: Double,
+    radians: Double
+): Point {
+    return point(
+        x = xRotationOf + (x - xRotationOf) * kotlin.math.cos(radians) -
+                (y - yRotationOf) * kotlin.math.sin(radians),
+        y = yRotationOf + (x - xRotationOf) * kotlin.math.sin(radians) +
+                (y - yRotationOf) * kotlin.math.cos(radians)
+    )
+}
+
+internal fun rotatePoint(
+    point: Point,
+    xRotationOf: Double,
+    yRotationOf: Double,
+    radians: Double
+): Point {
+    return rotatePoint(
+        x = point.x,
+        y = point.y,
+        xRotationOf = xRotationOf,
+        yRotationOf = yRotationOf,
+        radians = radians
+    )
+}
+
+internal fun rotatePoint(
+    point: Point,
+    pointOfRotation: Point,
+    radians: Double
+): Point {
+    return rotatePoint(
+        point = point,
+        xRotationOf = pointOfRotation.x,
+        yRotationOf = pointOfRotation.y,
+        radians = radians
+    )
+}

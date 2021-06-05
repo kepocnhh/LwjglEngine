@@ -49,6 +49,7 @@ object RoguelikeEngineLogic : EngineLogic {
             color = ColorEntity.BLUE,
             isPassable = true
         ),
+/*
         StateJourneyTerritoryRegion(
             points = rect(leftTop = point(x = 3, y = 3), rightBottom = point(x = 7, y = 7)),
             color = ColorEntity.YELLOW,
@@ -73,15 +74,32 @@ object RoguelikeEngineLogic : EngineLogic {
             color = ColorEntity.GREEN,
             isPassable = false
         )
+*/
     )
-    private val defaultTerritory: State.Journey.Territory = defaultTerritoryRegions.let { regions ->
-        val points = regions.flatMap { it.points }
+    private val defaultTerritoryStorages = listOf(
+        StateJourneyTerritoryStorage(
+            position = point(x = 5, y = 7),
+            size = size(width = 1, height = 1),
+            direction = 14.37,
+            color = ColorEntity.GREEN
+        ),
+        StateJourneyTerritoryStorage(
+            position = point(x = 13, y = 15),
+            size = size(width = 1.5, height = 1.0),
+            direction = -73.41,
+            color = ColorEntity.YELLOW
+        )
+    )
+    private val defaultTerritory: State.Journey.Territory = Unit.let {
+        val points = defaultTerritoryRegions.flatMap { it.points } +
+                defaultTerritoryStorages.map { it.position }
         StateJourneyTerritory(
             size = size(
                 width = points.maxOfOrNull { it.x }!!,
                 height = points.maxOfOrNull { it.y }!!
             ),
-            regions = regions
+            regions = defaultTerritoryRegions,
+            storages = defaultTerritoryStorages
         )
     }
 
@@ -140,6 +158,14 @@ object RoguelikeEngineLogic : EngineLogic {
                     },
                     color = region.color,
                     isPassable = region.isPassable
+                )
+            },
+            storages = storages.map {
+                StateJourneyTerritoryStorage(
+                    position = it.position.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
+                    size = it.size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
+                    direction = it.direction,
+                    color = it.color
                 )
             }
         )
@@ -242,7 +268,7 @@ object RoguelikeEngineLogic : EngineLogic {
         newPosition: Point
     ) {
         val isNewPositionAllowed = isNewPositionAllowed(
-            lines = allLines(regions = journey.territory.regions.filterNot { it.isPassable }),
+            lines = journey.territory.allLines(),
             newPosition = newPosition,
             distanceMin = distanceMin
         )
@@ -385,7 +411,7 @@ object RoguelikeEngineLogic : EngineLogic {
         val territory = journey.territory
         val p1: Point = journey.player.position
         val p2: Point = newPosition
-        val lines = allLines(regions = territory.regions.filter { !it.isPassable })
+        val lines = territory.allLines()
 //        val pointsShortest = points.filter { (p3, p4) ->
 //            val distanceShortest = calculateDistance(
 //                pointStart = p3,

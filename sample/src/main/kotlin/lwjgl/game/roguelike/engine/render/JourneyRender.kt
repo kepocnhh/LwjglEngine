@@ -1,17 +1,12 @@
 package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
-import lwjgl.game.roguelike.engine.util.calculateDistance
-import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
-import lwjgl.game.roguelike.engine.util.getNewPositionByDirection
+import lwjgl.game.roguelike.engine.util.rotatePoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
-import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
-import kotlin.math.sqrt
-import lwjgl.game.roguelike.engine.util.allLines
 import lwjgl.wrapper.entity.update
 
 class JourneyRender(
@@ -24,6 +19,7 @@ class JourneyRender(
         playerSize = playerSize // todo
     )
     private val movableRender: MovableRender = MovableRender(size = playerSize)
+
 /*
     private fun debug(
         canvas: Canvas,
@@ -123,6 +119,7 @@ class JourneyRender(
         }
     }
 */
+
     fun onRender(
         canvas: Canvas,
         journey: State.Journey,
@@ -148,6 +145,44 @@ class JourneyRender(
                 },
                 lineWidth = 1f
             )
+        }
+        journey.territory.storages.forEach {
+//            val xStart = it.position.x - it.size.width / 2
+//            val xFinish = xStart + it.size.width
+//            val yStart = it.position.y - it.size.height / 2
+//            val yFinish = yStart + it.size.height
+            val pointTopLeft = it.position.update(
+                dX = dX - it.size.width / 2,
+                dY = dY - it.size.height /2
+            )
+//            canvas.drawRectangle(
+//                color = it.color,
+//                pointTopLeft = pointTopLeft,
+//                size = it.size,
+//                lineWidth = 1f
+//            )
+//            val radians = java.lang.Math.toRadians(it.direction)
+//            canvas.drawPoint(
+//                color = it.color,
+//                point = rotatePoint(pointTopLeft, pointOfRotation = it.position.update(dX = dX, dY = dY), radians = radians)
+//            )
+            canvas.drawRectangle(
+                color = it.color,
+                pointTopLeft = pointTopLeft,
+                size = it.size,
+                lineWidth = 2f,
+                direction = it.direction,
+                pointOfRotation = it.position.update(dX = dX, dY = dY)
+            )
+            val fontHeight = 14f
+            canvas.drawByText(
+                fullPathFont = fullPathFont,
+                fontHeight = fontHeight,
+                color = it.color,
+                text = "S"
+            ) { width ->
+                it.position.update(dX = dX - width/2, dY = dY - fontHeight/2)
+            }
         }
         movableRender.onRender(
             canvas = canvas,

@@ -48,6 +48,15 @@ interface State {
             }
 
             val regions: List<Region>
+
+            interface Storage {
+                val position: Point
+                val size: Size
+                val direction: Double // 0..359
+                val color: Color
+            }
+
+            val storages: List<Storage>
         }
 
         val player: Player

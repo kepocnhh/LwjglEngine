@@ -7,6 +7,7 @@ import lwjgl.wrapper.entity.FontRender
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.fontRender
+import lwjgl.wrapper.entity.getTextWidth
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.util.glfw.glfwCreateWindow
 import lwjgl.wrapper.util.glfw.glfwGetMonitorSize
@@ -14,7 +15,6 @@ import lwjgl.wrapper.util.glfw.glfwGetWindowSize
 import lwjgl.wrapper.util.glfw.glfwSetWindowPos
 import lwjgl.wrapper.util.glfw.key.glfwKeyCallback
 import lwjgl.wrapper.util.glfw.key.glfwWindowCloseCallback
-import lwjgl.wrapper.util.glfw.opengl.*
 import lwjgl.wrapper.util.glfw.primitive.toGLFWInt
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW
@@ -23,7 +23,12 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.system.MemoryUtil
 import java.io.PrintStream
-import kotlin.math.sqrt
+import lwjgl.wrapper.util.glfw.opengl.glClearColor
+import lwjgl.wrapper.util.glfw.opengl.glColorOf
+import lwjgl.wrapper.util.glfw.opengl.glOrtho
+import lwjgl.wrapper.util.glfw.opengl.glTransaction
+import lwjgl.wrapper.util.glfw.opengl.glTransactionMatrix
+import lwjgl.wrapper.util.glfw.opengl.glVertexOf
 
 private val windows = mutableMapOf<Long, WindowStatus>()
 
@@ -156,8 +161,8 @@ private fun onPreRender(windowId: Long) {
     GL11.glMatrixMode(GL11.GL_PROJECTION)
     GL11.glLoadIdentity()
     glOrtho(
-        rightFrustumPlane = windowSize.width.toDouble(),
-        bottomFrustumPlane = windowSize.height.toDouble()
+        rightFrustumPlane = windowSize.width,
+        bottomFrustumPlane = windowSize.height
     )
     GL11.glMatrixMode(GL11.GL_MODELVIEW)
     GL11.glLoadIdentity()
@@ -337,5 +342,16 @@ private class WindowCanvas(
         text: CharSequence
     ) {
         fontRender.drawText(fullPathFont, fontHeight, pointTopLeft, color, text)
+    }
+
+    override fun drawByText(
+        fullPathFont: String,
+        fontHeight: Float,
+        color: Color,
+        text: CharSequence,
+        onDraw: (width: Double) -> Point
+    ) {
+        val width = fontRender.getTextWidth(fullPathFont, fontHeight, text)
+        fontRender.drawText(fullPathFont, fontHeight, pointTopLeft = onDraw(width), color = color, text = text)
     }
 }

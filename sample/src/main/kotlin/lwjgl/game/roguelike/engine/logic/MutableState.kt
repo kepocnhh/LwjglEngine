@@ -41,9 +41,17 @@ class StateJourneyTerritoryRegion(
     override val isPassable: Boolean
 ) : State.Journey.Territory.Region
 
+class StateJourneyTerritoryStorage(
+    override val position: Point,
+    override val size: Size,
+    override val direction: Double,
+    override val color: Color,
+) : State.Journey.Territory.Storage
+
 class StateJourneyTerritory(
     override val size: Size,
-    override val regions: List<State.Journey.Territory.Region>
+    override val regions: List<State.Journey.Territory.Region>,
+    override val storages: List<State.Journey.Territory.Storage>
 ) : State.Journey.Territory
 
 class MutableDummy(
