@@ -3,6 +3,7 @@ package lwjgl.wrapper.canvas
 import lwjgl.wrapper.entity.Color
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
+import lwjgl.wrapper.entity.point
 
 interface Canvas {
     fun drawPoint(color: Color, point: Point)
@@ -52,5 +53,30 @@ interface Canvas {
         color: Color,
         text: CharSequence,
         onDraw: (width: Double) -> /*pointTopLeft*/ Point
+    )
+}
+
+fun Canvas.drawCircle(
+    color: Color,
+    point: Point,
+    radius: Double,
+    edgeCount: Int,
+    lineWidth: Float
+) {
+    val points = (0..edgeCount).map {
+//        double angle = 2 * Math.PI * i / 300;
+//        double x = Math.cos(angle);
+//        double y = Math.sin(angle);
+//        gl.glVertex2d(x,y);
+        val radians = ((2 * kotlin.math.PI) / edgeCount) * it
+        point(
+            x = kotlin.math.cos(radians) * radius + point.x,
+            y = kotlin.math.sin(radians) * radius + point.y
+        )
+    }
+    drawLineLoop(
+        color = color,
+        points = points,
+        lineWidth = lineWidth
     )
 }

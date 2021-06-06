@@ -28,11 +28,17 @@ class MutablePoint(
     }
 }
 
+class MutableStateJourneyPlayerIndicator(
+    override var interaction: Boolean
+) : State.Journey.Player.Indicator
+
 class MutableStateJourneyPlayer(
     override val position: MutablePoint,
     override val velocity: Double,
     override var directionActual: Double,
-    override var directionExpected: Double
+    override var directionExpected: Double,
+    override var state: State.Journey.PlayerState,
+    override val indicator: MutableStateJourneyPlayerIndicator
 ) : State.Journey.Player
 
 class StateJourneyTerritoryRegion(

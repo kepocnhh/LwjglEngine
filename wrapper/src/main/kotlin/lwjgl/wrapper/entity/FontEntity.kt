@@ -156,7 +156,7 @@ private class AdvancedFontRender: FontRender {
 
         val fontByteBuffer = ioResourceToByteBuffer(source, 1024)
         val pixels = createByteBuffer(bufferSize)
-        val fontInfo = STBTTFontinfo.malloc()
+        val fontInfo = STBTTFontinfo.create()
         STBTruetype.stbtt_InitFont(fontInfo, fontByteBuffer)
         val charBuffer = STBTTPackedchar.malloc(charBufferLimit)
         STBTTPackContext.malloc().use { packContext ->

@@ -194,7 +194,9 @@ object RoguelikeEngineLogic : EngineLogic {
                                         position = MutablePoint(x = distanceMin, y = distanceMin),
                                         velocity = velocity,
                                         directionActual = direction,
-                                        directionExpected = direction
+                                        directionExpected = direction,
+                                        state = State.Journey.PlayerState.MOVE,
+                                        indicator = MutableStateJourneyPlayerIndicator(interaction = false)
                                     ),
                                     snapshot = MutableStateJourneySnapshot(
                                         dummy = MutableDummy(
@@ -618,6 +620,18 @@ object RoguelikeEngineLogic : EngineLogic {
     private fun onUpdateStateMainMenu(engineInputState: EngineInputState, engineProperty: EngineProperty) {
         // todo
     }
+    private fun onStoragesNearby(player: MutableStateJourneyPlayer, storages: List<State.Journey.Territory.Storage>) {
+        // todo
+        if (storages.isEmpty()) {
+            player.indicator.interaction = false
+            return
+        }
+        val storage = storages.minByOrNull {
+            calculateDistance(player.position, it.position)
+        }
+        checkNotNull(storage)
+        player.indicator.interaction = true
+    }
     private fun onUpdateStateJourney(
         engineInputState: EngineInputState,
         engineProperty: EngineProperty,
@@ -637,6 +651,18 @@ object RoguelikeEngineLogic : EngineLogic {
                 journey = journey,
                 joystick = joystick
             )
+        }
+        //
+        when (journey.player.state) {
+            State.Journey.PlayerState.MOVE -> {
+                val distanceMax = playerSize.width * 2
+                val storages = journey.territory.storages.filter {
+                    val d = calculateDistance(journey.player.position, it.position)
+                    d < distanceMax
+                }
+                onStoragesNearby(player = journey.player, storages = storages)
+            }
+            State.Journey.PlayerState.EXCHANGE -> TODO()
         }
         //
         val directionActual = journey.player.directionActual

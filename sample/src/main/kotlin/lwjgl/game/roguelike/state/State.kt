@@ -32,12 +32,25 @@ interface State {
         }
         val snapshot: Snapshot // todo
 
+        enum class PlayerState {
+            MOVE,
+            EXCHANGE,
+        }
+
         interface Player {
             val position: Point
             val velocity: Double // unit per nanosecond
             val directionExpected: Double // 0..359
             val directionActual: Double // 0..359
+            val state: PlayerState
+
+            interface Indicator {
+                val interaction: Boolean
+            }
+
+            val indicator: Indicator
         }
+
         interface Territory {
             val size: Size
 

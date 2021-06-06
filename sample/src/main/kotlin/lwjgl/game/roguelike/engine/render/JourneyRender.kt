@@ -16,7 +16,8 @@ class JourneyRender(
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit)
     private val playerRender = JourneyPlayerRender(
         fullPathFont = fullPathFont,
-        playerSize = playerSize // todo
+        playerSize = playerSize, // todo
+        pixelsPerUnit = pixelsPerUnit
     )
     private val movableRender: MovableRender = MovableRender(size = playerSize)
 
