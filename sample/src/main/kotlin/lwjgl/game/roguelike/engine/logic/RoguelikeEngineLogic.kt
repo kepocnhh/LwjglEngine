@@ -77,23 +77,27 @@ object RoguelikeEngineLogic : EngineLogic {
 */
     )
     private val defaultTerritoryStorages = listOf(
-        StateJourneyTerritoryStorage(
+        MutableStateJourneyTerritoryStorage(
             position = point(x = 5, y = 7),
             size = size(width = 1, height = 1),
             direction = 14.37,
-            color = ColorEntity.GREEN
+            color = ColorEntity.GREEN,
+            items = mutableSetOf(
+                StateJourneyItem(title = "item foo")
+            )
         ),
-        StateJourneyTerritoryStorage(
+        MutableStateJourneyTerritoryStorage(
             position = point(x = 13, y = 15),
             size = size(width = 1.5, height = 1.0),
             direction = -73.41,
-            color = ColorEntity.YELLOW
+            color = ColorEntity.YELLOW,
+            items = mutableSetOf()
         )
     )
     private val defaultTerritory: State.Journey.Territory = Unit.let {
         val points = defaultTerritoryRegions.flatMap { it.points } +
                 defaultTerritoryStorages.map { it.position }
-        StateJourneyTerritory(
+        MutableStateJourneyTerritory(
             size = size(
                 width = points.maxOfOrNull { it.x }!!,
                 height = points.maxOfOrNull { it.y }!!
@@ -149,7 +153,7 @@ object RoguelikeEngineLogic : EngineLogic {
         )
     }
     private fun State.Journey.Territory.fromUnitsToPixels(pixelsPerUnit: Double): State.Journey.Territory {
-        return StateJourneyTerritory(
+        return MutableStateJourneyTerritory(
             size = size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
             regions = regions.map { region ->
                 StateJourneyTerritoryRegion(
@@ -161,11 +165,12 @@ object RoguelikeEngineLogic : EngineLogic {
                 )
             },
             storages = storages.map {
-                StateJourneyTerritoryStorage(
+                MutableStateJourneyTerritoryStorage(
                     position = it.position.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
                     size = it.size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
                     direction = it.direction,
-                    color = it.color
+                    color = it.color,
+                    items = it.items.toMutableSet()
                 )
             }
         )
@@ -195,8 +200,9 @@ object RoguelikeEngineLogic : EngineLogic {
                                         velocity = velocity,
                                         directionActual = direction,
                                         directionExpected = direction,
-                                        state = State.Journey.PlayerState.MOVE,
-                                        indicator = MutableStateJourneyPlayerIndicator(interaction = false)
+                                        state = State.Journey.PlayerState.MoveState,
+                                        interactions = mutableSetOf(),
+                                        items = mutableSetOf()
                                     ),
                                     snapshot = MutableStateJourneySnapshot(
                                         dummy = MutableDummy(
@@ -224,6 +230,63 @@ object RoguelikeEngineLogic : EngineLogic {
             }
         }
     }
+    private fun onJourneyInputCallback(key: PrintableKey, status: KeyStatus) {
+        val journey: MutableStateJourney = requireNotNull(mutableState.journey)
+        when (journey.player.state) {
+            is State.Journey.PlayerState.ExchangeStorageState -> {
+                // todo
+            }
+            State.Journey.PlayerState.MoveState -> {
+                val interactions = journey.player.interactions
+                if (interactions.isNotEmpty()) {
+                    if (interactions.size != 1) TODO()
+                    val interaction = interactions.firstOrNull()!!
+                    when (key) {
+                        PrintableKey.F -> {
+                            when (status) {
+                                KeyStatus.RELEASE -> {
+                                    when (interaction) {
+                                        is State.Journey.Player.InteractionType.StorageType -> {
+                                            journey.player.state = State.Journey.PlayerState.ExchangeStorageState(
+                                                storage = interaction.storage
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private fun onJourneyInputCallback(key: FunctionKey, status: KeyStatus) {
+        val journey: MutableStateJourney = requireNotNull(mutableState.journey)
+        when (journey.player.state) {
+            is State.Journey.PlayerState.ExchangeStorageState -> {
+                when (key) {
+                    FunctionKey.ESCAPE -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                journey.player.state = State.Journey.PlayerState.MoveState
+                            }
+                        }
+                    }
+                }
+            }
+            State.Journey.PlayerState.MoveState -> {
+                when (key) {
+                    FunctionKey.ESCAPE -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                mutableState.engineStop()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     override val engineInputCallback = object : EngineInputCallback {
         override fun onPrintableKey(key: PrintableKey, status: KeyStatus) {
             when (mutableState.common) {
@@ -231,7 +294,7 @@ object RoguelikeEngineLogic : EngineLogic {
                     onMainMenuInputCallback(key, status)
                 }
                 State.Common.JOURNEY -> {
-                    // ignored
+                    onJourneyInputCallback(key, status)
                 }
             }
         }
@@ -242,15 +305,7 @@ object RoguelikeEngineLogic : EngineLogic {
                     onMainMenuInputCallback(key, status)
                 }
                 State.Common.JOURNEY -> {
-                    when (key) {
-                        FunctionKey.ESCAPE -> {
-                            when (status) {
-                                KeyStatus.RELEASE -> {
-                                    mutableState.engineStop()
-                                }
-                            }
-                        }
-                    }
+                    onJourneyInputCallback(key, status)
                 }
             }
         }
@@ -623,14 +678,13 @@ object RoguelikeEngineLogic : EngineLogic {
     private fun onStoragesNearby(player: MutableStateJourneyPlayer, storages: List<State.Journey.Territory.Storage>) {
         // todo
         if (storages.isEmpty()) {
-            player.indicator.interaction = false
             return
         }
-        val storage = storages.minByOrNull {
-            calculateDistance(player.position, it.position)
-        }
-        checkNotNull(storage)
-        player.indicator.interaction = true
+//        val storage = storages.minByOrNull {
+//            calculateDistance(player.position, it.position)
+//        }
+//        checkNotNull(storage)
+        player.interactions.addAll(storages.map { State.Journey.Player.InteractionType.StorageType(it) })
     }
     private fun onUpdateStateJourney(
         engineInputState: EngineInputState,
@@ -638,23 +692,25 @@ object RoguelikeEngineLogic : EngineLogic {
         journey: MutableStateJourney
     ) {
         val dTime = engineProperty.timeNow - engineProperty.timeLast
-        val joystick = engineInputState.joysticks.firstOrNull { it != null }
-        if (joystick == null) {
-            onUpdateStatePlayerPosition(
-                dTime = dTime,
-                journey = journey,
-                keyboard = engineInputState.keyboard
-            )
-        } else {
-            onUpdateStatePlayerPosition(
-                dTime = dTime,
-                journey = journey,
-                joystick = joystick
-            )
-        }
         //
         when (journey.player.state) {
-            State.Journey.PlayerState.MOVE -> {
+            State.Journey.PlayerState.MoveState -> {
+                val joystick = engineInputState.joysticks.firstOrNull { it != null }
+                if (joystick == null) {
+                    onUpdateStatePlayerPosition(
+                        dTime = dTime,
+                        journey = journey,
+                        keyboard = engineInputState.keyboard
+                    )
+                } else {
+                    onUpdateStatePlayerPosition(
+                        dTime = dTime,
+                        journey = journey,
+                        joystick = joystick
+                    )
+                }
+                //
+                journey.player.interactions.clear()
                 val distanceMax = playerSize.width * 2
                 val storages = journey.territory.storages.filter {
                     val d = calculateDistance(journey.player.position, it.position)
@@ -662,7 +718,9 @@ object RoguelikeEngineLogic : EngineLogic {
                 }
                 onStoragesNearby(player = journey.player, storages = storages)
             }
-            State.Journey.PlayerState.EXCHANGE -> TODO()
+            is State.Journey.PlayerState.ExchangeStorageState -> {
+                // todo
+            }
         }
         //
         val directionActual = journey.player.directionActual

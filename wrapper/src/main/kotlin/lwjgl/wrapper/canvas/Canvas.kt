@@ -40,6 +40,15 @@ interface Canvas {
         direction: Double,
         pointOfRotation: Point
     )
+
+    fun drawRectangle(
+        colorBorder: Color,
+        colorBackground: Color,
+        pointTopLeft: Point,
+        size: Size,
+        lineWidth: Float
+    )
+
     fun drawText(
         fullPathFont: String,
         fontHeight: Float,

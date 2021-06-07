@@ -32,9 +32,13 @@ interface State {
         }
         val snapshot: Snapshot // todo
 
-        enum class PlayerState {
-            MOVE,
-            EXCHANGE,
+        sealed class PlayerState {
+            object MoveState : PlayerState()
+            class ExchangeStorageState(val storage: Territory.Storage) : PlayerState()
+        }
+
+        interface Item {
+            val title: String
         }
 
         interface Player {
@@ -44,11 +48,18 @@ interface State {
             val directionActual: Double // 0..359
             val state: PlayerState
 
-            interface Indicator {
-                val interaction: Boolean
+//            interface Indicator {
+//                val interaction: Boolean
+//            }
+//
+//            val indicator: Indicator
+
+            sealed class InteractionType {
+                class StorageType(val storage: Territory.Storage) : InteractionType()
             }
 
-            val indicator: Indicator
+            val interactions: Set<InteractionType>
+            val items: Set<Item>
         }
 
         interface Territory {
@@ -67,6 +78,7 @@ interface State {
                 val size: Size
                 val direction: Double // 0..359
                 val color: Color
+                val items: Set<Item>
             }
 
             val storages: List<Storage>

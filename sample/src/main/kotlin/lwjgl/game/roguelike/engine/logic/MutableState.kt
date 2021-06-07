@@ -28,9 +28,7 @@ class MutablePoint(
     }
 }
 
-class MutableStateJourneyPlayerIndicator(
-    override var interaction: Boolean
-) : State.Journey.Player.Indicator
+class StateJourneyItem(override val title: String) : State.Journey.Item
 
 class MutableStateJourneyPlayer(
     override val position: MutablePoint,
@@ -38,7 +36,8 @@ class MutableStateJourneyPlayer(
     override var directionActual: Double,
     override var directionExpected: Double,
     override var state: State.Journey.PlayerState,
-    override val indicator: MutableStateJourneyPlayerIndicator
+    override val interactions: MutableSet<State.Journey.Player.InteractionType>,
+    override val items: MutableSet<State.Journey.Item>
 ) : State.Journey.Player
 
 class StateJourneyTerritoryRegion(
@@ -47,17 +46,18 @@ class StateJourneyTerritoryRegion(
     override val isPassable: Boolean
 ) : State.Journey.Territory.Region
 
-class StateJourneyTerritoryStorage(
+class MutableStateJourneyTerritoryStorage(
     override val position: Point,
     override val size: Size,
     override val direction: Double,
     override val color: Color,
+    override val items: MutableSet<State.Journey.Item>
 ) : State.Journey.Territory.Storage
 
-class StateJourneyTerritory(
+class MutableStateJourneyTerritory(
     override val size: Size,
     override val regions: List<State.Journey.Territory.Region>,
-    override val storages: List<State.Journey.Territory.Storage>
+    override val storages: List<MutableStateJourneyTerritoryStorage>
 ) : State.Journey.Territory
 
 class MutableDummy(

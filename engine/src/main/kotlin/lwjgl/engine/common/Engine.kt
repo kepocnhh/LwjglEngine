@@ -203,6 +203,7 @@ private fun onKeyCallback(
     keyStatus: KeyStatus,
     key: Int
 ) {
+    println("on -> key callback: $key $keyStatus")
     val printableKey = key.toPrintableKeyOrNull()
     if(printableKey != null) {
         mutableEngineInputState.keyboard.printableKeys[printableKey] = keyStatus

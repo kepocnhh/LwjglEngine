@@ -334,6 +334,35 @@ private class WindowCanvas(
         ), size, lineWidth = lineWidth)
     }
 
+    override fun drawRectangle(
+        colorBorder: Color,
+        colorBackground: Color,
+        pointTopLeft: Point,
+        size: Size,
+        lineWidth: Float
+    ) {
+        val pointBottomRight = point(
+            x = pointTopLeft.x + size.width,
+            y = pointTopLeft.y + size.height
+        )
+        glColorOf(colorBackground)
+        glTransaction(GL11.GL_TRIANGLE_STRIP) {
+            glVertexOf(pointTopLeft)
+            glVertexOf(pointBottomRight.x, pointTopLeft.y)
+            glVertexOf(pointBottomRight)
+            glVertexOf(pointTopLeft.x, pointBottomRight.y)
+            glVertexOf(pointTopLeft)
+        }
+        GL11.glLineWidth(lineWidth)
+        glColorOf(colorBorder)
+        glTransaction(GL11.GL_LINE_LOOP) {
+            glVertexOf(pointTopLeft)
+            glVertexOf(pointBottomRight.x, pointTopLeft.y)
+            glVertexOf(pointBottomRight)
+            glVertexOf(pointTopLeft.x, pointBottomRight.y)
+        }
+    }
+
     override fun drawText(
         fullPathFont: String,
         fontHeight: Float,

@@ -8,6 +8,7 @@ import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.color
 import lwjgl.wrapper.entity.point
+import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.entity.update
 
 class JourneyPlayerRender(
@@ -66,26 +67,49 @@ class JourneyPlayerRender(
             text = String.format("%.1f", player.directionActual),
             fontHeight = 16f
         )
-        when {
-            player.indicator.interaction -> {
-                val color = ColorEntity.GREEN
-                val point = point(x = center.x, y = center.y + playerSize.height * 1.5)
-                canvas.drawCircle(
-                    color = color,
-                    point = point,
-                    radius = 0.35 * pixelsPerUnit,
-                    edgeCount = 10,
-                    lineWidth = 1f
-                )
-                val fontHeight = 12f
-                canvas.drawByText(
-                    fullPathFont = fullPathFont,
-                    fontHeight = fontHeight,
-                    color = color,
-                    text = "F"
-                ) { width ->
-                    point.update(dX = - width / 2, dY = - fontHeight / 2.0)
+        when (val state = player.state) {
+            State.Journey.PlayerState.MoveState -> {
+                if (player.interactions.isNotEmpty()) {
+                    val color = ColorEntity.GREEN
+                    val point = point(x = center.x, y = center.y + playerSize.height * 1.5)
+                    canvas.drawCircle(
+                        color = color,
+                        point = point,
+                        radius = 0.35 * pixelsPerUnit,
+                        edgeCount = 10,
+                        lineWidth = 1f
+                    )
+                    val fontHeight = 12f
+                    canvas.drawByText(
+                        fullPathFont = fullPathFont,
+                        fontHeight = fontHeight,
+                        color = color,
+                        text = "F"
+                    ) { width ->
+                        point.update(dX = - width / 2, dY = - fontHeight / 2.0)
+                    }
                 }
+            }
+            is State.Journey.PlayerState.ExchangeStorageState -> {
+                val storage = state.storage
+                val padding = 32.0
+                val width = engineProperty.pictureSize.width / 2 - padding * 1.5
+                val height = engineProperty.pictureSize.height / 2
+                canvas.drawRectangle(
+                    colorBorder = ColorEntity.GREEN,
+                    colorBackground = ColorEntity.BLACK,
+                    pointTopLeft = point(x = padding, y = center.y - height / 2),
+                    size = size(width = width, height = height),
+                    lineWidth = 3f
+                )
+                canvas.drawRectangle(
+                    colorBorder = ColorEntity.GREEN,
+                    colorBackground = ColorEntity.BLACK,
+                    pointTopLeft = point(x = padding + width + padding, y = center.y - height / 2),
+                    size = size(width = width, height = height),
+                    lineWidth = 3f
+                )
+                // todo
             }
         }
     }
