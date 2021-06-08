@@ -32,9 +32,13 @@ interface State {
         }
         val snapshot: Snapshot // todo
 
-        sealed class PlayerState {
-            object MoveState : PlayerState()
-            class ExchangeStorageState(val storage: Territory.Storage) : PlayerState()
+        interface PlayerState {
+            object MoveState : PlayerState
+            interface ExchangeStorageState : PlayerState {
+                val storage: Territory.Storage
+                val focusedItem: Item?
+                val focusedStorage: Boolean
+            }
         }
 
         interface Item {

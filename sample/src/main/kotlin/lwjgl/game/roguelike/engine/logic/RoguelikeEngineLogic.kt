@@ -230,11 +230,25 @@ object RoguelikeEngineLogic : EngineLogic {
             }
         }
     }
+    private fun onSelectItem(state: MutableExchangeStorageState, player: MutableStateJourneyPlayer) {
+        val item = state.focusedItem ?: return
+        state.storage.items -= item
+        player.items += item
+        state.focusedItem = state.storage.items.firstOrNull()
+    }
     private fun onJourneyInputCallback(key: PrintableKey, status: KeyStatus) {
         val journey: MutableStateJourney = requireNotNull(mutableState.journey)
-        when (journey.player.state) {
-            is State.Journey.PlayerState.ExchangeStorageState -> {
-                // todo
+        when (val state = journey.player.state) {
+            is MutableExchangeStorageState -> {
+                when (key) {
+                    PrintableKey.F -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                onSelectItem(state = state, player = journey.player)
+                            }
+                        }
+                    }
+                }
             }
             State.Journey.PlayerState.MoveState -> {
                 val interactions = journey.player.interactions
@@ -247,8 +261,10 @@ object RoguelikeEngineLogic : EngineLogic {
                                 KeyStatus.RELEASE -> {
                                     when (interaction) {
                                         is State.Journey.Player.InteractionType.StorageType -> {
-                                            journey.player.state = State.Journey.PlayerState.ExchangeStorageState(
-                                                storage = interaction.storage
+                                            journey.player.state = MutableExchangeStorageState(
+                                                storage = interaction.storage.toMutable(),
+                                                focusedItem = interaction.storage.items.firstOrNull(),
+                                                focusedStorage = true
                                             )
                                         }
                                     }
@@ -262,13 +278,27 @@ object RoguelikeEngineLogic : EngineLogic {
     }
     private fun onJourneyInputCallback(key: FunctionKey, status: KeyStatus) {
         val journey: MutableStateJourney = requireNotNull(mutableState.journey)
-        when (journey.player.state) {
-            is State.Journey.PlayerState.ExchangeStorageState -> {
+        when (val state = journey.player.state) {
+            is MutableExchangeStorageState -> {
                 when (key) {
                     FunctionKey.ESCAPE -> {
                         when (status) {
                             KeyStatus.RELEASE -> {
                                 journey.player.state = State.Journey.PlayerState.MoveState
+                            }
+                        }
+                    }
+                    FunctionKey.ENTER -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                onSelectItem(state = state, player = journey.player)
+                            }
+                        }
+                    }
+                    FunctionKey.TAB -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                state.focusedStorage = !state.focusedStorage
                             }
                         }
                     }

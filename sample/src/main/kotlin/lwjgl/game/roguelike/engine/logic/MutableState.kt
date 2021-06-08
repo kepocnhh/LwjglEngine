@@ -30,6 +30,12 @@ class MutablePoint(
 
 class StateJourneyItem(override val title: String) : State.Journey.Item
 
+class MutableExchangeStorageState(
+    override val storage: MutableStateJourneyTerritoryStorage,
+    override var focusedItem: State.Journey.Item?,
+    override var focusedStorage: Boolean
+) : State.Journey.PlayerState.ExchangeStorageState
+
 class MutableStateJourneyPlayer(
     override val position: MutablePoint,
     override val velocity: Double,
@@ -54,6 +60,15 @@ class MutableStateJourneyTerritoryStorage(
     override val items: MutableSet<State.Journey.Item>
 ) : State.Journey.Territory.Storage
 
+fun State.Journey.Territory.Storage.toMutable(): MutableStateJourneyTerritoryStorage {
+    return MutableStateJourneyTerritoryStorage(
+        position = position,
+        size = size,
+        direction = direction,
+        color = color,
+        items = items.toMutableSet(),
+    )
+}
 class MutableStateJourneyTerritory(
     override val size: Size,
     override val regions: List<State.Journey.Territory.Region>,

@@ -203,7 +203,6 @@ private fun onKeyCallback(
     keyStatus: KeyStatus,
     key: Int
 ) {
-    println("on -> key callback: $key $keyStatus")
     val printableKey = key.toPrintableKeyOrNull()
     if(printableKey != null) {
         mutableEngineInputState.keyboard.printableKeys[printableKey] = keyStatus
@@ -349,7 +348,8 @@ object Engine {
         loopWindow(
             windowSize = WindowSize.Exact(size = size(width = 640, height = 480)),
             title = "Engine",
-            onKeyCallback = { _, key: Int, _, action: Int, _ ->
+            onKeyCallback = { _, key: Int, scanCode: Int, action: Int, _ ->
+                println("on -> key callback: $key $scanCode $action")
                 when (val keyStatus = action.toKeyStatusOrNull()) {
                     KeyStatus.REPEAT, null -> {/* ignored */}
                     else -> onKeyCallback(logic, mutableEngineInputState, keyStatus, key)

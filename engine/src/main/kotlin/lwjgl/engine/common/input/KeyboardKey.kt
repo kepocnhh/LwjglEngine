@@ -4,6 +4,7 @@ enum class FunctionKey {
     ESCAPE,
     ENTER,
     SPACE,
+    TAB,
 }
 
 enum class PrintableKey {

@@ -107,7 +107,6 @@ object KeyboardEngineLogic : EngineLogic {
         for (key in FunctionKey.values()) {
             val x: Int
             val y: Int
-            if (key == FunctionKey.ESCAPE) continue
             when (key) {
                 FunctionKey.ENTER -> {
                     x = 300
@@ -117,7 +116,7 @@ object KeyboardEngineLogic : EngineLogic {
                     x = 150
                     y = 100
                 }
-                FunctionKey.ESCAPE -> TODO()
+                FunctionKey.ESCAPE, FunctionKey.TAB -> continue
             }
             val status = engineInputState.keyboard.functionKeys[key]
             canvas.drawText(

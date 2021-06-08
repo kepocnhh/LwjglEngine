@@ -54,3 +54,12 @@ fun color(
         alpha = alpha
     )
 }
+
+fun Color.withAlpha(alpha: Float): Color {
+    return color(
+        red = red,
+        green = green,
+        blue = blue,
+        alpha = alpha
+    )
+}

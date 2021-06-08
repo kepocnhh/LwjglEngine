@@ -26,12 +26,20 @@ interface Canvas {
         points: Iterable<Point>,
         lineWidth: Float
     )
+
     fun drawRectangle(
         color: Color,
         pointTopLeft: Point,
         size: Size,
         lineWidth: Float
     )
+
+    fun drawRectangle(
+        color: Color,
+        pointTopLeft: Point,
+        size: Size
+    )
+
     fun drawRectangle(
         color: Color,
         pointTopLeft: Point,
