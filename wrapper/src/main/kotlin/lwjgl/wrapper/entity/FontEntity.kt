@@ -116,8 +116,8 @@ private class AdvancedFontRender: FontRender {
         xBuffer.put(0, x.toFloat())
         yBuffer.put(0, y.toFloat())
 
-        GL11.glEnable(GL11.GL_BLEND)
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+//        GL11.glEnable(GL11.GL_BLEND)
+//        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
 
         GL11.glEnable(GL11.GL_TEXTURE_2D)
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, fontInfo.textureId)
@@ -147,7 +147,8 @@ private class AdvancedFontRender: FontRender {
             }
         }
 
-        GL11.glDisable(GL11.GL_BLEND)
+        GL11.glDisable(GL11.GL_TEXTURE_2D)
+//        GL11.glDisable(GL11.GL_BLEND)
     }
 
     private fun createFrontInfo(fullPathFont: String, fontHeight: Float): FontInfo {

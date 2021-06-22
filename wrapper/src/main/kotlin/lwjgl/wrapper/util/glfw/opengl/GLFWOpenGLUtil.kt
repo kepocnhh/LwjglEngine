@@ -18,12 +18,12 @@ fun glTransaction(mode: Int, action: () -> Unit) {
     GL11.glEnd()
 }
 
-fun glTransactionBlend(sourceFactor: Int, destinationFactor: Int, action: () -> Unit) {
-    GL11.glEnable(GL11.GL_BLEND)
-    GL11.glBlendFunc(sourceFactor, destinationFactor)
-    action()
-    GL11.glDisable(GL11.GL_BLEND)
-}
+//fun glTransactionBlend(sourceFactor: Int, destinationFactor: Int, action: () -> Unit) {
+//    GL11.glEnable(GL11.GL_BLEND)
+//    GL11.glBlendFunc(sourceFactor, destinationFactor)
+//    action()
+//    GL11.glDisable(GL11.GL_BLEND)
+//}
 
 fun glVertexOf(value1: Int, value2: Int) {
     GL11.glVertex2i(value1, value2)

@@ -27,7 +27,6 @@ import lwjgl.wrapper.util.glfw.opengl.glClearColor
 import lwjgl.wrapper.util.glfw.opengl.glColorOf
 import lwjgl.wrapper.util.glfw.opengl.glOrtho
 import lwjgl.wrapper.util.glfw.opengl.glTransaction
-import lwjgl.wrapper.util.glfw.opengl.glTransactionBlend
 import lwjgl.wrapper.util.glfw.opengl.glTransactionMatrix
 import lwjgl.wrapper.util.glfw.opengl.glVertexOf
 
@@ -154,8 +153,8 @@ private fun onPreRender(windowId: Long) {
 //    GL11.glEnable(GL11.GL_DEPTH_TEST)
 //    GL11.glDisable(GL11.GL_DEPTH_TEST)
 
-//    GL11.glEnable(GL11.GL_BLEND)
-//    GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+    GL11.glEnable(GL11.GL_BLEND)
+    GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
 
     val windowSize = glfwGetWindowSize(windowId)
 //    GL11.glViewport(0, 0, windowSize.width, windowSize.height)
@@ -319,24 +318,13 @@ private class WindowCanvas(
             x = pointTopLeft.x + size.width,
             y = pointTopLeft.y + size.height
         )
-//        val sourceFactor = GL11.GL_ONE
-        val sourceFactor = GL11.GL_SRC_ALPHA
-        glTransactionBlend(sourceFactor = sourceFactor, destinationFactor = GL11.GL_ONE_MINUS_SRC_ALPHA) {
-            glColorOf(color)
-            glTransaction(GL11.GL_TRIANGLE_STRIP) {
-                glVertexOf(x = pointTopLeft.x    , y = pointTopLeft.y    )
-                glVertexOf(x = pointBottomRight.x, y = pointTopLeft.y    )
-                glVertexOf(x = pointTopLeft.x    , y = pointBottomRight.y)
-                glVertexOf(x = pointBottomRight.x, y = pointBottomRight.y)
-            }
+        glColorOf(color)
+        glTransaction(GL11.GL_TRIANGLE_STRIP) {
+            glVertexOf(x = pointTopLeft.x    , y = pointTopLeft.y)
+            glVertexOf(x = pointBottomRight.x, y = pointTopLeft.y)
+            glVertexOf(x = pointTopLeft.x    , y = pointBottomRight.y)
+            glVertexOf(x = pointBottomRight.x, y = pointBottomRight.y)
         }
-//        glColorOf(color)
-//        glTransaction(GL11.GL_TRIANGLE_STRIP) {
-//            glVertexOf(x = pointTopLeft.x    , y = pointTopLeft.y)
-//            glVertexOf(x = pointBottomRight.x, y = pointTopLeft.y)
-//            glVertexOf(x = pointTopLeft.x    , y = pointBottomRight.y)
-//            glVertexOf(x = pointBottomRight.x, y = pointBottomRight.y)
-//        }
     }
 
     override fun drawRectangle(

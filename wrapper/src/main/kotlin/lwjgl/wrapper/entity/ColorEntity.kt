@@ -38,7 +38,7 @@ fun color(
     mapOf(
         "red" to red,
         "green" to green,
-        "red" to red
+        "blue" to blue
     ).forEach { (key, value) ->
         check(value in expectedRange) {
             "color $key value must be in $expectedRange"
@@ -55,7 +55,7 @@ fun color(
     )
 }
 
-fun Color.withAlpha(alpha: Float): Color {
+fun Color.update(alpha: Float): Color {
     return color(
         red = red,
         green = green,
