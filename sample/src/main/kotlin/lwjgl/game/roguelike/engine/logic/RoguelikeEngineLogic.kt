@@ -21,6 +21,7 @@ import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.util.glfw.key.KeyStatus
 import lwjgl.wrapper.util.resource.ResourceProvider
 import lwjgl.game.roguelike.engine.util.isNewPositionAllowed
+import lwjgl.game.roguelike.util.StateUtil.getSortedItems
 import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.Line
 import lwjgl.wrapper.entity.Point
@@ -82,16 +83,16 @@ object RoguelikeEngineLogic : EngineLogic {
             size = size(width = 1, height = 1),
             direction = 14.37,
             color = ColorEntity.GREEN,
-            items = mutableSetOf(
-                StateJourneyItem(title = "item foo")
-            )
+            items = (0..3).map {
+                StateJourneyItem(title = "item #$it")
+            }.toMutableList()
         ),
         MutableStateJourneyTerritoryStorage(
             position = point(x = 13, y = 15),
             size = size(width = 1.5, height = 1.0),
             direction = -73.41,
             color = ColorEntity.YELLOW,
-            items = mutableSetOf()
+            items = mutableListOf()
         )
     )
     private val defaultTerritory: State.Journey.Territory = Unit.let {
@@ -152,7 +153,7 @@ object RoguelikeEngineLogic : EngineLogic {
             y = y * pixelsPerUnit
         )
     }
-    private fun State.Journey.Territory.fromUnitsToPixels(pixelsPerUnit: Double): State.Journey.Territory {
+    private fun State.Journey.Territory.fromUnitsToPixels(pixelsPerUnit: Double): MutableStateJourneyTerritory {
         return MutableStateJourneyTerritory(
             size = size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
             regions = regions.map { region ->
@@ -170,7 +171,7 @@ object RoguelikeEngineLogic : EngineLogic {
                     size = it.size.fromUnitsToPixels(pixelsPerUnit = pixelsPerUnit),
                     direction = it.direction,
                     color = it.color,
-                    items = it.items.toMutableSet()
+                    items = it.items.toMutableList()
                 )
             }
         )
@@ -202,7 +203,7 @@ object RoguelikeEngineLogic : EngineLogic {
                                         directionExpected = direction,
                                         state = State.Journey.PlayerState.MoveState,
                                         interactions = mutableSetOf(),
-                                        items = mutableSetOf()
+                                        items = mutableListOf()
                                     ),
                                     snapshot = MutableStateJourneySnapshot(
                                         dummy = MutableDummy(
@@ -230,11 +231,30 @@ object RoguelikeEngineLogic : EngineLogic {
             }
         }
     }
+
     private fun onSelectItem(state: MutableExchangeStorageState, player: MutableStateJourneyPlayer) {
         val item = state.focusedItem ?: return
-        state.storage.items -= item
-        player.items += item
-        state.focusedItem = state.storage.items.firstOrNull()
+        if (state.focusedStorage) {
+            val index = state.storage.getSortedItems().indexOf(item)
+            state.storage.items -= item
+            player.items += item
+            val items = state.storage.getSortedItems()
+            if (items.isEmpty()) {
+                state.focusedItem = null
+            } else {
+                state.focusedItem = items[kotlin.math.min(index, items.lastIndex)]
+            }
+        } else {
+            val index = player.getSortedItems().indexOf(item)
+            state.storage.items += item
+            player.items -= item
+            val items = player.getSortedItems()
+            if (items.isEmpty()) {
+                state.focusedItem = null
+            } else {
+                state.focusedItem = items[kotlin.math.min(index, items.lastIndex)]
+            }
+        }
     }
     private fun onJourneyInputCallback(key: PrintableKey, status: KeyStatus) {
         val journey: MutableStateJourney = requireNotNull(mutableState.journey)
@@ -260,9 +280,9 @@ object RoguelikeEngineLogic : EngineLogic {
                             when (status) {
                                 KeyStatus.RELEASE -> {
                                     when (interaction) {
-                                        is State.Journey.Player.InteractionType.StorageType -> {
+                                        is MutableStorageType -> {
                                             journey.player.state = MutableExchangeStorageState(
-                                                storage = interaction.storage.toMutable(),
+                                                storage = interaction.storage,
                                                 focusedItem = interaction.storage.items.firstOrNull(),
                                                 focusedStorage = true
                                             )
@@ -299,6 +319,51 @@ object RoguelikeEngineLogic : EngineLogic {
                         when (status) {
                             KeyStatus.RELEASE -> {
                                 state.focusedStorage = !state.focusedStorage
+                                if (state.focusedStorage) {
+                                    state.focusedItem = state.storage.getSortedItems().firstOrNull()
+                                } else {
+                                    state.focusedItem = journey.player.getSortedItems().firstOrNull()
+                                }
+                            }
+                        }
+                    }
+                    FunctionKey.ARROW_UP -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                val item = state.focusedItem ?: return
+                                if (state.focusedStorage) {
+                                    val items = state.storage.getSortedItems()
+                                    val index = items.indexOf(item)
+                                    if (index > 0) {
+                                        state.focusedItem = items[index - 1]
+                                    }
+                                } else {
+                                    val items = journey.player.getSortedItems()
+                                    val index = items.indexOf(item)
+                                    if (index > 0) {
+                                        state.focusedItem = items[index - 1]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    FunctionKey.ARROW_DOWN -> {
+                        when (status) {
+                            KeyStatus.RELEASE -> {
+                                val item = state.focusedItem ?: return
+                                if (state.focusedStorage) {
+                                    val items = state.storage.getSortedItems()
+                                    val index = items.indexOf(item)
+                                    if (index < items.lastIndex) {
+                                        state.focusedItem = items[index + 1]
+                                    }
+                                } else {
+                                    val items = journey.player.getSortedItems()
+                                    val index = items.indexOf(item)
+                                    if (index < items.lastIndex) {
+                                        state.focusedItem = items[index + 1]
+                                    }
+                                }
                             }
                         }
                     }
@@ -705,7 +770,7 @@ object RoguelikeEngineLogic : EngineLogic {
     private fun onUpdateStateMainMenu(engineInputState: EngineInputState, engineProperty: EngineProperty) {
         // todo
     }
-    private fun onStoragesNearby(player: MutableStateJourneyPlayer, storages: List<State.Journey.Territory.Storage>) {
+    private fun onStoragesNearby(player: MutableStateJourneyPlayer, storages: List<MutableStateJourneyTerritoryStorage>) {
         // todo
         if (storages.isEmpty()) {
             return
@@ -714,7 +779,7 @@ object RoguelikeEngineLogic : EngineLogic {
 //            calculateDistance(player.position, it.position)
 //        }
 //        checkNotNull(storage)
-        player.interactions.addAll(storages.map { State.Journey.Player.InteractionType.StorageType(it) })
+        player.interactions.addAll(storages.map { MutableStorageType(it) })
     }
     private fun onUpdateStateJourney(
         engineInputState: EngineInputState,

@@ -43,6 +43,8 @@ fun Int.toFunctionKeyOrNull(): FunctionKey? {
         GLFW.GLFW_KEY_ENTER -> FunctionKey.ENTER
         GLFW.GLFW_KEY_SPACE -> FunctionKey.SPACE
         GLFW.GLFW_KEY_TAB -> FunctionKey.TAB
+        GLFW.GLFW_KEY_UP -> FunctionKey.ARROW_UP
+        GLFW.GLFW_KEY_DOWN -> FunctionKey.ARROW_DOWN
         else -> null
     }
 }

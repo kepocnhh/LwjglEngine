@@ -2,6 +2,7 @@ package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
 import lwjgl.game.roguelike.state.State
+import lwjgl.game.roguelike.util.StateUtil.getSortedItems
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.canvas.drawCircle
 import lwjgl.wrapper.entity.ColorEntity
@@ -100,20 +101,71 @@ class JourneyPlayerRender(
                     pointTopLeft = point(x = 0.0, y = 0.0),
                     size = engineProperty.pictureSize
                 )
+                val y = center.y - height / 2
+                val xStorage = padding
                 canvas.drawRectangle(
                     colorBorder = ColorEntity.GREEN,
                     colorBackground = ColorEntity.BLACK,
-                    pointTopLeft = point(x = padding, y = center.y - height / 2),
+                    pointTopLeft = point(x = xStorage, y = y),
                     size = size(width = width, height = height),
                     lineWidth = if (state.focusedStorage) 3f else 1f
                 )
+                val itemsStorage = storage.getSortedItems()
+                for (i in itemsStorage.indices) {
+                    val item = itemsStorage[i]
+                    val fontHeight = 16f
+                    val yItem = y + i * fontHeight.toDouble() + fontHeight / 2
+                    canvas.drawText(
+                        fullPathFont = fullPathFont,
+                        color = ColorEntity.GREEN,
+                        pointTopLeft = point(
+                            x = xStorage + fontHeight,
+                            y = yItem
+                        ),
+                        text = item.title,
+                        fontHeight = fontHeight
+                    )
+                    if (state.focusedItem == item) {
+                        canvas.drawLine(
+                            color = ColorEntity.GREEN,
+                            pointStart = point(x = xStorage + fontHeight / 2, y = yItem),
+                            pointFinish = point(x = xStorage + fontHeight / 2, y = yItem + fontHeight),
+                            lineWidth = 2f
+                        )
+                    }
+                }
+                val xPlayer = padding + width + padding
                 canvas.drawRectangle(
                     colorBorder = ColorEntity.GREEN,
                     colorBackground = ColorEntity.BLACK,
-                    pointTopLeft = point(x = padding + width + padding, y = center.y - height / 2),
+                    pointTopLeft = point(x = xPlayer, y = y),
                     size = size(width = width, height = height),
                     lineWidth = if (state.focusedStorage) 1f else 3f
                 )
+                val itemsPlayer = player.getSortedItems()
+                for (i in itemsPlayer.indices) {
+                    val item = itemsPlayer[i]
+                    val fontHeight = 16f
+                    val yItem = y + i * fontHeight.toDouble() + fontHeight / 2
+                    canvas.drawText(
+                        fullPathFont = fullPathFont,
+                        color = ColorEntity.GREEN,
+                        pointTopLeft = point(
+                            x = xPlayer + fontHeight,
+                            y = yItem
+                        ),
+                        text = item.title,
+                        fontHeight = fontHeight
+                    )
+                    if (state.focusedItem == item) {
+                        canvas.drawLine(
+                            color = ColorEntity.GREEN,
+                            pointStart = point(x = xPlayer + fontHeight / 2, y = yItem),
+                            pointFinish = point(x = xPlayer + fontHeight / 2, y = yItem + fontHeight),
+                            lineWidth = 2f
+                        )
+                    }
+                }
                 // todo
             }
         }

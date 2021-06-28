@@ -43,6 +43,10 @@ interface State {
 
         interface Item {
             val title: String
+
+            enum class SortedType {
+                TITLE
+            }
         }
 
         interface Player {
@@ -58,12 +62,14 @@ interface State {
 //
 //            val indicator: Indicator
 
-            sealed class InteractionType {
-                class StorageType(val storage: Territory.Storage) : InteractionType()
+            interface InteractionType {
+                interface StorageType : InteractionType {
+                    val storage: Territory.Storage
+                }
             }
 
             val interactions: Set<InteractionType>
-            val items: Set<Item>
+            val items: List<Item>
         }
 
         interface Territory {
@@ -82,7 +88,7 @@ interface State {
                 val size: Size
                 val direction: Double // 0..359
                 val color: Color
-                val items: Set<Item>
+                val items: List<Item>
             }
 
             val storages: List<Storage>

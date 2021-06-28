@@ -5,6 +5,8 @@ enum class FunctionKey {
     ENTER,
     SPACE,
     TAB,
+    ARROW_UP,
+    ARROW_DOWN,
 }
 
 enum class PrintableKey {

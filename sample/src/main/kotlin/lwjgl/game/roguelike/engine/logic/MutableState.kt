@@ -43,8 +43,12 @@ class MutableStateJourneyPlayer(
     override var directionExpected: Double,
     override var state: State.Journey.PlayerState,
     override val interactions: MutableSet<State.Journey.Player.InteractionType>,
-    override val items: MutableSet<State.Journey.Item>
+    override val items: MutableList<State.Journey.Item>
 ) : State.Journey.Player
+
+class MutableStorageType(
+    override val storage: MutableStateJourneyTerritoryStorage
+) : State.Journey.Player.InteractionType.StorageType
 
 class StateJourneyTerritoryRegion(
     override val points: List<Point>,
@@ -57,18 +61,21 @@ class MutableStateJourneyTerritoryStorage(
     override val size: Size,
     override val direction: Double,
     override val color: Color,
-    override val items: MutableSet<State.Journey.Item>
+    override val items: MutableList<State.Journey.Item>
 ) : State.Journey.Territory.Storage
 
+/*
 fun State.Journey.Territory.Storage.toMutable(): MutableStateJourneyTerritoryStorage {
     return MutableStateJourneyTerritoryStorage(
         position = position,
         size = size,
         direction = direction,
         color = color,
-        items = items.toMutableSet(),
+        items = items.toMutableList(),
     )
 }
+*/
+
 class MutableStateJourneyTerritory(
     override val size: Size,
     override val regions: List<State.Journey.Territory.Region>,
@@ -87,7 +94,7 @@ class MutableStateJourneySnapshot(
 ) : State.Journey.Snapshot
 
 class MutableStateJourney(
-    override var territory: State.Journey.Territory,
+    override val territory: MutableStateJourneyTerritory,
     override val player: MutableStateJourneyPlayer,
     override val snapshot: MutableStateJourneySnapshot
 ) : State.Journey

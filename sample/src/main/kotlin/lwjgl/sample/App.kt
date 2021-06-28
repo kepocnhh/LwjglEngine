@@ -116,7 +116,7 @@ object KeyboardEngineLogic : EngineLogic {
                     x = 150
                     y = 100
                 }
-                FunctionKey.ESCAPE, FunctionKey.TAB -> continue
+                FunctionKey.ESCAPE, FunctionKey.TAB, FunctionKey.ARROW_UP, FunctionKey.ARROW_DOWN -> continue
             }
             val status = engineInputState.keyboard.functionKeys[key]
             canvas.drawText(
