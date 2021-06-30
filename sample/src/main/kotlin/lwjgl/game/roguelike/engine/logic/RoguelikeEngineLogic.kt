@@ -7,6 +7,8 @@ import lwjgl.engine.common.input.EngineInputCallback
 import lwjgl.engine.common.input.EngineInputState
 import lwjgl.engine.common.input.FunctionKey
 import lwjgl.engine.common.input.PrintableKey
+import lwjgl.game.roguelike.engine.entity.Intelligence
+import lwjgl.game.roguelike.engine.entity.Positionable
 import lwjgl.game.roguelike.engine.render.Render
 import lwjgl.game.roguelike.engine.util.allLines
 import lwjgl.game.roguelike.engine.util.calculateAngle
@@ -50,7 +52,6 @@ object RoguelikeEngineLogic : EngineLogic {
             color = ColorEntity.BLUE,
             isPassable = true
         ),
-/*
         StateJourneyTerritoryRegion(
             points = rect(leftTop = point(x = 3, y = 3), rightBottom = point(x = 7, y = 7)),
             color = ColorEntity.YELLOW,
@@ -75,11 +76,10 @@ object RoguelikeEngineLogic : EngineLogic {
             color = ColorEntity.GREEN,
             isPassable = false
         )
-*/
     )
     private val defaultTerritoryStorages = listOf(
         MutableStateJourneyTerritoryStorage(
-            position = point(x = 5, y = 7),
+            position = point(x = 5, y = 8),
             size = size(width = 1, height = 1),
             direction = 14.37,
             color = ColorEntity.GREEN,
@@ -88,7 +88,7 @@ object RoguelikeEngineLogic : EngineLogic {
             }.toMutableList()
         ),
         MutableStateJourneyTerritoryStorage(
-            position = point(x = 13, y = 15),
+            position = point(x = 13, y = 10),
             size = size(width = 1.5, height = 1.0),
             direction = -73.41,
             color = ColorEntity.YELLOW,
@@ -194,6 +194,10 @@ object RoguelikeEngineLogic : EngineLogic {
                                 val distanceMin = kotlin.math.sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
                                 val direction = 135.0
                                 val velocity = 5.0 / TimeUnit.NANO_IN_SECOND
+                                val goals = listOf(
+                                    Intelligence.Goal.Move(target = territory.storages[0]),
+                                    Intelligence.Goal.Move(target = territory.storages[1])
+                                )
                                 val journey = MutableStateJourney(
                                     territory = territory,
                                     player = MutableStateJourneyPlayer(
@@ -210,12 +214,14 @@ object RoguelikeEngineLogic : EngineLogic {
                                             position = MutablePoint(
                                                 x = territory.size.width - distanceMin,
                                                 y = territory.size.height -distanceMin
-//                                                x = distanceMin,
-//                                                y = distanceMin + pixelsPerUnit * 2
                                             ),
                                             velocity = velocity,
                                             directionActual = 315.0,
-                                            directionExpected = 315.0
+                                            directionExpected = 315.0,
+                                            intelligence = MutableIntelligence(
+                                                goals = goals,
+                                                goalCurrent = goals.firstOrNull()!!
+                                            )
                                         )
                                     )
                                 )
@@ -283,7 +289,7 @@ object RoguelikeEngineLogic : EngineLogic {
                                         is MutableStorageType -> {
                                             journey.player.state = MutableExchangeStorageState(
                                                 storage = interaction.storage,
-                                                focusedItem = interaction.storage.items.firstOrNull(),
+                                                focusedItem = interaction.storage.getSortedItems().firstOrNull(),
                                                 focusedStorage = true
                                             )
                                         }
@@ -763,7 +769,10 @@ object RoguelikeEngineLogic : EngineLogic {
                 onUpdateStatePlayerPosition(
                     dTime = dTime,
                     journey = journey,
-                    velocityMultiple = velocityMultiple, dX = dX, dY = dY)
+                    velocityMultiple = velocityMultiple,
+                    dX = dX,
+                    dY = dY
+                )
             }
         }
     }
@@ -780,6 +789,93 @@ object RoguelikeEngineLogic : EngineLogic {
 //        }
 //        checkNotNull(storage)
         player.interactions.addAll(storages.map { MutableStorageType(it) })
+    }
+    private fun onUpdateStateDummyPosition(
+        dTime: Double,
+        territory: State.Journey.Territory,
+        dummy: MutableDummy,
+        target: Positionable
+    ) {
+        val velocityMultiple = 1.0
+        dummy.directionExpected = calculateAngle(
+            oldX = dummy.position.x,
+            oldY = dummy.position.y,
+            newX = target.position.x,
+            newY = target.position.y
+        )
+        val newPosition = getNewPositionByDirection(
+            oldPosition = dummy.position,
+            units = dummy.velocity * velocityMultiple * dTime * pixelsPerUnit,
+            direction = dummy.directionExpected
+        )
+        val distanceMin = kotlin.math.sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
+//        val isNewPositionAllowed = isNewPositionAllowed(
+//            lines = territory.allLines(),
+//            newPosition = newPosition,
+//            distanceMin = distanceMin
+//        )
+        val isNewPositionAllowed = true // todo
+        if (isNewPositionAllowed) {
+            dummy.position.x = newPosition.x
+            dummy.position.y = newPosition.y
+        } else {
+            println("new position $newPosition is not allowed")
+        }
+        // todo
+        val directionActual = dummy.directionActual
+        val directionExpected = dummy.directionExpected
+        if (directionActual != directionExpected) {
+            val directionVelocity = 360.0 / TimeUnit.NANO_IN_SECOND
+            val difference = (directionActual - directionExpected).let {
+                when {
+                    it > 180.0 -> it - 360.0
+                    it <-180.0 -> it + 360.0
+                    else -> it
+                }
+            }
+            val d = directionVelocity * dTime
+            if (d > difference.absoluteValue) {
+                dummy.directionActual = directionExpected
+            } else {
+                if (difference < 0) {
+                    dummy.directionActual += d
+                } else {
+                    dummy.directionActual -= d
+                }
+            }
+        }
+    }
+    private fun onUpdateStateJourneySnapshot(
+        dTime: Double,
+        territory: State.Journey.Territory,
+        snapshot: MutableStateJourneySnapshot
+    ) {
+        val goalCurrent = snapshot.dummy.intelligence.goalCurrent
+        checkNotNull(goalCurrent)
+        val goals = snapshot.dummy.intelligence.goals
+        val index = goals.indexOf(goalCurrent)
+        check(index >= 0)
+        when (goalCurrent) {
+            is Intelligence.Goal.Move -> {
+                val distanceMax = playerSize.width * 2 // todo
+                val distance = calculateDistance(pointStart = snapshot.dummy.position, pointFinish = goalCurrent.target.position)
+                if (distance < distanceMax) {
+                    if (index == goals.lastIndex) {
+                        snapshot.dummy.intelligence.goalCurrent = goals[0]
+                    } else {
+                        snapshot.dummy.intelligence.goalCurrent = goals[index + 1]
+                    }
+                } else {
+                    onUpdateStateDummyPosition(
+                        dTime = dTime,
+                        territory = territory,
+                        dummy = snapshot.dummy,
+                        target = goalCurrent.target
+                    )
+                }
+            }
+            else -> TODO()
+        }
     }
     private fun onUpdateStateJourney(
         engineInputState: EngineInputState,
@@ -840,6 +936,12 @@ object RoguelikeEngineLogic : EngineLogic {
                 }
             }
         }
+        //
+        onUpdateStateJourneySnapshot(
+            dTime = dTime,
+            territory = journey.territory,
+            snapshot = journey.snapshot
+        )
     }
     override fun onUpdateState(engineInputState: EngineInputState, engineProperty: EngineProperty) {
         when (mutableState.common) {

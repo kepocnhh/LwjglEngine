@@ -1,6 +1,7 @@
 package lwjgl.game.roguelike.state
 
 import lwjgl.game.roguelike.engine.entity.Dummy
+import lwjgl.game.roguelike.engine.entity.Positionable
 import lwjgl.wrapper.entity.Color
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
@@ -49,8 +50,7 @@ interface State {
             }
         }
 
-        interface Player {
-            val position: Point
+        interface Player : Positionable {
             val velocity: Double // unit per nanosecond
             val directionExpected: Double // 0..359
             val directionActual: Double // 0..359
@@ -83,8 +83,7 @@ interface State {
 
             val regions: List<Region>
 
-            interface Storage {
-                val position: Point
+            interface Storage : Positionable {
                 val size: Size
                 val direction: Double // 0..359
                 val color: Color

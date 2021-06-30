@@ -139,37 +139,18 @@ class JourneyRender(
             canvas.drawLineLoop(
                 color = region.color,
                 points = region.points.map {
-                    point(
-                        x = dX + it.x,
-                        y = dY + it.y
-                    )
+                    it.update(dX = dX, dY = dY)
                 },
                 lineWidth = 1f
             )
         }
         journey.territory.storages.forEach {
-//            val xStart = it.position.x - it.size.width / 2
-//            val xFinish = xStart + it.size.width
-//            val yStart = it.position.y - it.size.height / 2
-//            val yFinish = yStart + it.size.height
-            val pointTopLeft = it.position.update(
-                dX = dX - it.size.width / 2,
-                dY = dY - it.size.height /2
-            )
-//            canvas.drawRectangle(
-//                color = it.color,
-//                pointTopLeft = pointTopLeft,
-//                size = it.size,
-//                lineWidth = 1f
-//            )
-//            val radians = java.lang.Math.toRadians(it.direction)
-//            canvas.drawPoint(
-//                color = it.color,
-//                point = rotatePoint(pointTopLeft, pointOfRotation = it.position.update(dX = dX, dY = dY), radians = radians)
-//            )
             canvas.drawRectangle(
                 color = it.color,
-                pointTopLeft = pointTopLeft,
+                pointTopLeft = it.position.update(
+                    dX = dX - it.size.width / 2,
+                    dY = dY - it.size.height /2
+                ),
                 size = it.size,
                 lineWidth = 2f,
                 direction = it.direction,

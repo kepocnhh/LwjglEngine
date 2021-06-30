@@ -14,14 +14,8 @@ class MovableRender(
         movable: Movable,
         color: Color
     ) {
-        val position = point(
-            x = dX + movable.position.x,
-            y = dY + movable.position.y
-        )
-        val relativePosition = point(
-            x = position.x - size.width / 2,
-            y = position.y - size.height /2
-        )
+        val position = movable.position.update(dX = dX, dY = dY)
+        val relativePosition = position.update(dX = - size.width / 2, dY = - size.height /2)
         canvas.drawRectangle(
             color = color,
             pointTopLeft = relativePosition,

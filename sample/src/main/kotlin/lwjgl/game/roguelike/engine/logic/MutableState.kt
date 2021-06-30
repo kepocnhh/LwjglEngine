@@ -1,6 +1,7 @@
 package lwjgl.game.roguelike.engine.logic
 
 import lwjgl.game.roguelike.engine.entity.Dummy
+import lwjgl.game.roguelike.engine.entity.Intelligence
 import lwjgl.game.roguelike.state.State
 import lwjgl.game.roguelike.util.TimeUnit
 import lwjgl.wrapper.entity.Color
@@ -64,29 +65,23 @@ class MutableStateJourneyTerritoryStorage(
     override val items: MutableList<State.Journey.Item>
 ) : State.Journey.Territory.Storage
 
-/*
-fun State.Journey.Territory.Storage.toMutable(): MutableStateJourneyTerritoryStorage {
-    return MutableStateJourneyTerritoryStorage(
-        position = position,
-        size = size,
-        direction = direction,
-        color = color,
-        items = items.toMutableList(),
-    )
-}
-*/
-
 class MutableStateJourneyTerritory(
     override val size: Size,
     override val regions: List<State.Journey.Territory.Region>,
     override val storages: List<MutableStateJourneyTerritoryStorage>
 ) : State.Journey.Territory
 
+class MutableIntelligence(
+    override val goals: List<Intelligence.Goal>,
+    override var goalCurrent: Intelligence.Goal?
+) : Intelligence
+
 class MutableDummy(
-    override val position: Point,
+    override val position: MutablePoint,
     override val velocity: Double,
     override var directionExpected: Double,
-    override var directionActual: Double
+    override var directionActual: Double,
+    override val intelligence: MutableIntelligence
 ) : Dummy
 
 class MutableStateJourneySnapshot(
