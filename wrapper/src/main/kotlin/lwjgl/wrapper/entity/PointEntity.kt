@@ -14,6 +14,17 @@ private class PointImpl(
         val fY = String.format("%.1f", y)
         return "{x:$fX,y:$fY}"
     }
+
+    override fun hashCode(): Int {
+        return (x + y * 13).toInt()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return when (other) {
+            is Point -> x == other.x && y == other.y
+            else -> false
+        }
+    }
 }
 
 fun point(

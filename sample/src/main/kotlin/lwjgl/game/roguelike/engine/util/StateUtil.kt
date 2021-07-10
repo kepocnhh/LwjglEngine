@@ -40,7 +40,7 @@ internal fun State.Journey.Territory.allLines(): List<Line> {
     }
 }
 
-private fun State.Journey.Territory.Region.allLines(): List<Line> {
+internal fun State.Journey.Territory.Region.allLines(): List<Line> {
     val result = mutableListOf<Line>()
     var i = 0
     val size = points.size

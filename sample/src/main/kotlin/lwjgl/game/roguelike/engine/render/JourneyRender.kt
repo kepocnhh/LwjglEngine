@@ -1,6 +1,7 @@
 package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
+import lwjgl.game.roguelike.engine.util.getConvexHull
 import lwjgl.game.roguelike.engine.util.rotatePoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
@@ -139,6 +140,15 @@ class JourneyRender(
             canvas.drawLineLoop(
                 color = region.color,
                 points = region.points.map {
+                    it.update(dX = dX, dY = dY)
+                },
+                lineWidth = 1f
+            )
+//            println("region " + region.color)
+            val convexHull = getConvexHull(region.points)
+            canvas.drawLineLoop(
+                color = ColorEntity.CYAN,
+                points = convexHull.map {
                     it.update(dX = dX, dY = dY)
                 },
                 lineWidth = 1f

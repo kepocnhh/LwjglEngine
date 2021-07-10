@@ -48,52 +48,109 @@ object RoguelikeEngineLogic : EngineLogic {
             isPassable = true
         ),
         StateJourneyTerritoryRegion(
-            points = rect(leftTop = point(x = 18, y = 18), rightBottom = point(x = 20, y = 20)),
+            points = rect(leftTop = point(x = 23, y = 18), rightBottom = point(x = 25, y = 20)),
             color = ColorEntity.BLUE,
             isPassable = true
         ),
         StateJourneyTerritoryRegion(
-            points = rect(leftTop = point(x = 3, y = 3), rightBottom = point(x = 7, y = 7)),
+            points = listOf(
+                point(x = 6 + 0, y = 6 + 0),
+                point(x = 6 + 3, y = 6 - 1),
+                point(x = 6 + 6, y = 6 + 2),
+                point(x = 6 + 3, y = 6 + 5),
+                point(x = 6 + 0, y = 6 + 4),
+                point(x = 6 + 0, y = 6 + 2),
+            ),
             color = ColorEntity.YELLOW,
             isPassable = false
         ),
         StateJourneyTerritoryRegion(
             points = listOf(
-                point(x = 10 + 0, y = 10 + 0),
-                point(x = 10 + 6, y = 10 + 3),
-                point(x = 10 - 1, y = 10 + 10),
-                point(x = 10 - 3, y = 10 + 6)
+                point(x = 6 + 0, y = 6 + 10 + 0),
+                point(x = 6 + 2, y = 6 + 10 + 0),
+                point(x = 6 + 4, y = 6 + 10 + 0),
+                point(x = 6 + 4, y = 6 + 10 + 2),
+                point(x = 6 + 4, y = 6 + 10 + 4),
+                point(x = 6 + 2, y = 6 + 10 + 4),
+                point(x = 6 + 0, y = 6 + 10 + 4),
+                point(x = 6 + 0, y = 6 + 10 + 2),
             ),
-            color = ColorEntity.CYAN,
+            color = ColorEntity.WHITE,
             isPassable = false
         ),
         StateJourneyTerritoryRegion(
             points = listOf(
-                point(x = 10 - 6, y = 10 + 2),
-                point(x = 10 - 4, y = 10 + 6),
-                point(x = 10 - 9, y = 10 + 8)
+                point(x = 6 + 0, y = 6 + 20 + 0),
+                point(x = 6 + 2, y = 6 + 20 + 1),
+                point(x = 6 + 4, y = 6 + 20 + 0),
+                point(x = 6 + 3, y = 6 + 20 + 2),
+                point(x = 6 + 4, y = 6 + 20 + 4),
+                point(x = 6 + 2, y = 6 + 20 + 3),
+                point(x = 6 + 0, y = 6 + 20 + 4),
+                point(x = 6 + 1, y = 6 + 20 + 2),
+            ),
+            color = ColorEntity.WHITE,
+            isPassable = false
+        ),
+//        StateJourneyTerritoryRegion(
+//            points = rect(leftTop = point(x = 6, y = 6), rightBottom = point(x = 10, y = 10)),
+//            color = ColorEntity.YELLOW,
+//            isPassable = false
+//        ),
+        StateJourneyTerritoryRegion(
+            points = listOf(
+                point(x = 13 + 2, y = 8 + 0),
+                point(x = 13 + 5, y = 8 + 0),
+                point(x = 13 + 7, y = 8 + 5),
+                point(x = 13 + 3, y = 8 + 7),
+                point(x = 13 + 3, y = 8 + 3),
+                point(x = 13 + 0, y = 8 + 4),
             ),
             color = ColorEntity.GREEN,
             isPassable = false
-        )
+        ),
+//        StateJourneyTerritoryRegion(
+//            points = rect(leftTop = point(x = 13, y = 8), rightBottom = point(x = 18, y = 13)),
+//            color = ColorEntity.YELLOW,
+//            isPassable = false
+//        ),
+//        StateJourneyTerritoryRegion(
+//            points = listOf(
+//                point(x = 10 + 0, y = 10 + 0),
+//                point(x = 10 + 6, y = 10 + 3),
+//                point(x = 10 - 1, y = 10 + 10),
+//                point(x = 10 - 3, y = 10 + 6)
+//            ),
+//            color = ColorEntity.CYAN,
+//            isPassable = false
+//        ),
+//        StateJourneyTerritoryRegion(
+//            points = listOf(
+//                point(x = 10 - 6, y = 10 + 2),
+//                point(x = 10 - 4, y = 10 + 6),
+//                point(x = 10 - 9, y = 10 + 8)
+//            ),
+//            color = ColorEntity.GREEN,
+//            isPassable = false
+//        )
     )
-    private val defaultTerritoryStorages = listOf(
-        MutableStateJourneyTerritoryStorage(
-            position = point(x = 5, y = 8),
-            size = size(width = 1, height = 1),
-            direction = 14.37,
-            color = ColorEntity.GREEN,
-            items = (0..3).map {
-                StateJourneyItem(title = "item #$it")
-            }.toMutableList()
-        ),
-        MutableStateJourneyTerritoryStorage(
-            position = point(x = 13, y = 10),
-            size = size(width = 1.5, height = 1.0),
-            direction = -73.41,
-            color = ColorEntity.YELLOW,
-            items = mutableListOf()
-        )
+    private val defaultTerritoryStorages: List<MutableStateJourneyTerritoryStorage> = listOf(
+//        MutableStateJourneyTerritoryStorage(
+//            position = point(x = 4, y = 4),
+//            size = size(width = 1, height = 1),
+//            direction = 14.37,
+//            color = ColorEntity.GREEN,
+//            items = (0..3).map {
+//                StateJourneyItem(title = "item #$it")
+//            }.toMutableList()
+//        ),
+//        MutableStateJourneyTerritoryStorage(
+//            position = point(x = 20, y = 13),
+//            size = size(width = 1.5, height = 1.0),
+//            direction = -73.41,
+//            color = ColorEntity.YELLOW,
+//            items = mutableListOf()
+//        )
     )
     private val defaultTerritory: State.Journey.Territory = Unit.let {
         val points = defaultTerritoryRegions.flatMap { it.points } +
@@ -194,9 +251,9 @@ object RoguelikeEngineLogic : EngineLogic {
                                 val distanceMin = kotlin.math.sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
                                 val direction = 135.0
                                 val velocity = 5.0 / TimeUnit.NANO_IN_SECOND
-                                val goals = listOf(
-                                    Intelligence.Goal.Move(target = territory.storages[0]),
-                                    Intelligence.Goal.Move(target = territory.storages[1])
+                                val goals: List<Intelligence.Goal> = listOf(
+//                                    Intelligence.Goal.Move(target = territory.storages[0]),
+//                                    Intelligence.Goal.Move(target = territory.storages[1])
                                 )
                                 val journey = MutableStateJourney(
                                     territory = territory,
@@ -220,7 +277,7 @@ object RoguelikeEngineLogic : EngineLogic {
                                             directionExpected = 315.0,
                                             intelligence = MutableIntelligence(
                                                 goals = goals,
-                                                goalCurrent = goals.firstOrNull()!!
+                                                goalCurrent = goals.firstOrNull()
                                             )
                                         )
                                     )
@@ -421,6 +478,25 @@ object RoguelikeEngineLogic : EngineLogic {
     private val playerSize = size(width = 1 * pixelsPerUnit, height = 1 * pixelsPerUnit) // todo
 
     private fun proxySetNewPosition(
+        territory: State.Journey.Territory,
+        distanceMin: Double,
+        oldPosition: MutablePoint,
+        newPosition: Point
+    ) {
+        val isNewPositionAllowed = isNewPositionAllowed(
+            lines = territory.allLines(),
+            newPosition = newPosition,
+            distanceMin = distanceMin
+        )
+        if (isNewPositionAllowed) {
+            oldPosition.x = newPosition.x
+            oldPosition.y = newPosition.y
+        } else {
+            println("new position $newPosition is not allowed")
+        }
+    }
+    @Deprecated(message = "proxySetNewPosition(State.Journey.Territory, Double, MutablePoint, Point)")
+    private fun proxySetNewPosition(
         journey: MutableStateJourney,
         distanceMin: Double,
         newPosition: Point
@@ -437,6 +513,68 @@ object RoguelikeEngineLogic : EngineLogic {
             println("new position $newPosition is not allowed")
         }
     }
+    private fun onUpdatePositionByIntersection(
+        territory: State.Journey.Territory,
+        oldPosition: MutablePoint,
+        p2: Point,
+        line: Line,
+        iPoint: Point,
+        distanceMin: Double
+    ) {
+        val p1: Point = oldPosition
+        val distanceNewShortest = calculateDistance(
+            line = line,
+            point = p2
+        )
+        if (distanceNewShortest >= distanceMin) {
+            proxySetNewPosition(
+                territory = territory,
+                distanceMin = distanceMin,
+                oldPosition = oldPosition,
+                newPosition = p2
+            )
+            return
+        }
+        val distanceIntersection = calculateDistance(
+            pointStart = p1,
+            pointFinish = iPoint
+        )
+        val distanceActual = calculateDistance(
+            pointStart = p1,
+            pointFinish = p2
+        )
+        if (distanceActual < distanceIntersection) {
+            val distanceShortest = calculateDistance(
+                line = line,
+                point = p1
+            )
+            val x = (1 - distanceMin / distanceShortest) * (iPoint.x - p1.x) + p1.x
+            val y = (1 - distanceMin / distanceShortest) * (iPoint.y - p1.y) + p1.y
+            val r = point(x = x, y = y)
+            val newShortest = calculateDistance(
+                line = line,
+                point = r
+            )
+            if (newShortest.isLessThan(distanceMin, precision = 12)) return
+            val n = getTriangleHeightPoint(
+                line = line,
+                point = r
+            )
+            val s = getTriangleHeightPoint(
+                line = line,
+                point = p2
+            )
+            proxySetNewPosition(
+                territory = territory,
+                distanceMin = distanceMin,
+                oldPosition = oldPosition,
+                newPosition = point(x = r.x + s.x - n.x, y = r.y + s.y - n.y)
+            )
+        } else {
+            // todo
+        }
+    }
+    @Deprecated(message = "onUpdatePositionByIntersection")
     private fun onUpdateStatePlayerPositionByIntersection(
         journey: MutableStateJourney,
         p2: Point,
@@ -790,7 +928,110 @@ object RoguelikeEngineLogic : EngineLogic {
 //        checkNotNull(storage)
         player.interactions.addAll(storages.map { MutableStorageType(it) })
     }
+    private fun onUpdateStateDummyDirection(
+        dTime: Double,
+        dummy: MutableDummy,
+        newPosition: Point
+    ) {
+        dummy.directionExpected = calculateAngle(
+            oldX = dummy.position.x,
+            oldY = dummy.position.y,
+            newX = newPosition.x,
+            newY = newPosition.y
+        )
+        val directionActual = dummy.directionActual
+        val directionExpected = dummy.directionExpected
+        if (directionActual != directionExpected) {
+            val directionVelocity = 360.0 / TimeUnit.NANO_IN_SECOND
+            val difference = (directionActual - directionExpected).let {
+                when {
+                    it > 180.0 -> it - 360.0
+                    it <-180.0 -> it + 360.0
+                    else -> it
+                }
+            }
+            val d = directionVelocity * dTime
+            if (d > difference.absoluteValue) {
+                dummy.directionActual = directionExpected
+            } else {
+                if (difference < 0) {
+                    dummy.directionActual += d
+                } else {
+                    dummy.directionActual -= d
+                }
+            }
+        }
+    }
     private fun onUpdateStateDummyPosition(
+        dTime: Double,
+        territory: State.Journey.Territory,
+        dummy: MutableDummy,
+        targetExpected: Positionable
+    ) {
+        val velocityMultiple = 1.0
+        val intersections = territory.regions.filter { !it.isPassable }.mapNotNull {
+            val lines = it.allLines()
+            val iPoints = lines.mapNotNull { line ->
+                getIntersectionPointOrNull(p1 = dummy.position, p2 = targetExpected.position, line = line)
+            }
+            if (iPoints.isEmpty()) null else {
+                it to iPoints
+            }
+        }
+        if (intersections.isEmpty()) {
+            val newPosition = getNewPositionByDirection(
+                oldPosition = dummy.position,
+                units = dummy.velocity * velocityMultiple * dTime * pixelsPerUnit,
+                direction = dummy.directionExpected
+            )
+            dummy.position.x = newPosition.x
+            dummy.position.y = newPosition.y
+            onUpdateStateDummyDirection(
+                dTime = dTime,
+                dummy = dummy,
+                newPosition = targetExpected.position
+            )
+        } else {
+            val (region, points) = intersections.minByOrNull { (_, points) ->
+                points.minOfOrNull {
+                    calculateDistance(pointStart = dummy.position, pointFinish = it)
+                }!!
+            }!!
+            val lines = region.allLines()
+            for (point in points) {
+                val iRegion = lines.mapNotNull { line ->
+                    getIntersectionPointOrNull(p1 = dummy.position, p2 = point, line = line)
+                }
+                if (iRegion.isNotEmpty()) {
+                    // todo
+                    continue
+                }
+                val iTarget = lines.mapNotNull { line ->
+                    getIntersectionPointOrNull(p1 = point, p2 = targetExpected.position, line = line)
+                }
+                if (iTarget.isEmpty()) {
+                    val newPosition = getNewPositionByDirection(
+                        oldPosition = dummy.position,
+                        units = dummy.velocity * velocityMultiple * dTime * pixelsPerUnit,
+                        direction = dummy.directionExpected
+                    )
+                    dummy.position.x = newPosition.x
+                    dummy.position.y = newPosition.y
+                    onUpdateStateDummyDirection(
+                        dTime = dTime,
+                        dummy = dummy,
+                        newPosition = point
+                    )
+                    break
+                } else {
+                    // todo
+                }
+            }
+            // todo
+        }
+    }
+    @Deprecated(message = "old")
+    private fun onUpdateStateDummyPositionOld(
         dTime: Double,
         territory: State.Journey.Territory,
         dummy: MutableDummy,
@@ -809,17 +1050,82 @@ object RoguelikeEngineLogic : EngineLogic {
             direction = dummy.directionExpected
         )
         val distanceMin = kotlin.math.sqrt(playerSize.width * playerSize.width + playerSize.height * playerSize.height) / 2
-//        val isNewPositionAllowed = isNewPositionAllowed(
-//            lines = territory.allLines(),
-//            newPosition = newPosition,
-//            distanceMin = distanceMin
-//        )
-        val isNewPositionAllowed = true // todo
-        if (isNewPositionAllowed) {
-            dummy.position.x = newPosition.x
-            dummy.position.y = newPosition.y
+        val lines = territory.allLines()
+        val group = lines.groupBy {
+            calculateDistance(
+                line = it,
+                point = newPosition
+            )
+        }
+        val distanceShortest = group.keys.minByOrNull { it }!!
+        val pointsShortest = if (distanceShortest < distanceMin) {
+            group[distanceShortest]!!
         } else {
-            println("new position $newPosition is not allowed")
+            emptyList()
+        }
+        if (pointsShortest.isEmpty()) {
+            proxySetNewPosition(
+                territory = territory,
+                distanceMin = distanceMin,
+                oldPosition = dummy.position,
+                newPosition = newPosition
+            )
+        } else {
+            val p1: Point = dummy.position
+            val p2: Point = newPosition
+            val results = pointsShortest.mapNotNull { line ->
+                getIntersectionPointOrNull(
+                    p1 = p1,
+                    p2 = p2,
+                    line = line,
+                )?.let {
+                    line to it
+                }
+            }.filter { (_, intersectionPoint) ->
+                val distanceIntersection = calculateDistance(
+                    pointStart = p1,
+                    pointFinish = intersectionPoint
+                )
+                val distanceActual = calculateDistance(
+                    pointStart = p1,
+                    pointFinish = p2
+                )
+                val distanceResult = calculateDistance(
+                    pointStart = p2,
+                    pointFinish = intersectionPoint
+                )
+                distanceResult < distanceIntersection && distanceActual < distanceIntersection
+            }
+            if (results.isEmpty()) {
+                // todo
+            } else if (results.size == 1) {
+                val (line, intersectionPoint) = results.firstOrNull()!!
+                onUpdatePositionByIntersection(
+                    territory = territory,
+                    p2 = p2,
+                    line = line,
+                    iPoint = intersectionPoint,
+                    oldPosition = dummy.position,
+                    distanceMin = distanceMin
+                )
+            } else if (results.size == 2) {
+                val (line, intersectionPoint) = results.maxByOrNull { (_, intersectionPoint) ->
+                    calculateDistance(
+                        pointStart = p1,
+                        pointFinish = intersectionPoint
+                    )
+                }!!
+                onUpdatePositionByIntersection(
+                    territory = territory,
+                    p2 = p2,
+                    line = line,
+                    iPoint = intersectionPoint,
+                    oldPosition = dummy.position,
+                    distanceMin = distanceMin
+                )
+            } else {
+                // todo
+            }
         }
         // todo
         val directionActual = dummy.directionActual
@@ -850,8 +1156,7 @@ object RoguelikeEngineLogic : EngineLogic {
         territory: State.Journey.Territory,
         snapshot: MutableStateJourneySnapshot
     ) {
-        val goalCurrent = snapshot.dummy.intelligence.goalCurrent
-        checkNotNull(goalCurrent)
+        val goalCurrent = snapshot.dummy.intelligence.goalCurrent ?: return // todo
         val goals = snapshot.dummy.intelligence.goals
         val index = goals.indexOf(goalCurrent)
         check(index >= 0)
@@ -870,7 +1175,7 @@ object RoguelikeEngineLogic : EngineLogic {
                         dTime = dTime,
                         territory = territory,
                         dummy = snapshot.dummy,
-                        target = goalCurrent.target
+                        targetExpected = goalCurrent.target
                     )
                 }
             }

@@ -1,9 +1,10 @@
 package lwjgl.game.roguelike.engine.util
 
+import java.util.LinkedList
+import kotlin.math.absoluteValue
 import lwjgl.game.roguelike.util.isLessThan
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
-import kotlin.math.*
 import lwjgl.wrapper.entity.Line
 import lwjgl.wrapper.entity.update
 
@@ -17,12 +18,12 @@ internal fun calculateDistance(
 ): Double {
     val dX = xFinish - xStart
     val dY = yFinish - yStart
-    val d = sqrt(dY * dY + dX * dX)
-    val dS = sqrt((yStart - y) * (yStart - y) + (xStart - x) * (xStart - x))
-    val dF = sqrt((yFinish - y) * (yFinish - y) + (xFinish - x) * (xFinish - x))
+    val d = kotlin.math.sqrt(dY * dY + dX * dX)
+    val dS = kotlin.math.sqrt((yStart - y) * (yStart - y) + (xStart - x) * (xStart - x))
+    val dF = kotlin.math.sqrt((yFinish - y) * (yFinish - y) + (xFinish - x) * (xFinish - x))
     val shortest = (dY * x - dX * y + xFinish * yStart - yFinish * xStart).absoluteValue / d
-    if (sqrt(dS * dS - shortest * shortest) > d) return dF
-    if (sqrt(dF * dF - shortest * shortest) > d) return dS
+    if (kotlin.math.sqrt(dS * dS - shortest * shortest) > d) return dF
+    if (kotlin.math.sqrt(dF * dF - shortest * shortest) > d) return dS
     return shortest
 }
 
@@ -60,7 +61,7 @@ private fun calculateDistance(
 ): Double {
     val dX = xFinish - xStart
     val dY = yFinish - yStart
-    return sqrt(dY * dY + dX * dX)
+    return kotlin.math.sqrt(dY * dY + dX * dX)
 }
 
 internal fun calculateDistance(
@@ -108,15 +109,15 @@ internal fun getNewPositionByDirection(
 ): Point {
     val radians = Math.toRadians(direction)
     return oldPosition.update(
-        dX = units * sin(radians),
-        dY = - units * cos(radians)
+        dX = units * kotlin.math.sin(radians),
+        dY = - units * kotlin.math.cos(radians)
     )
 }
 
 internal fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
-    val angle = atan2(y = oldX - newX, x = oldY - newY)
+    val angle = kotlin.math.atan2(y = oldX - newX, x = oldY - newY)
     val degrees = angle * -180.0 / kotlin.math.PI
-    return degrees + ceil(-degrees / 360.0) * 360.0
+    return degrees + kotlin.math.ceil(-degrees / 360.0) * 360.0
 }
 
 internal fun getTriangleHeightPoint(
@@ -212,4 +213,87 @@ internal fun rotatePoint(
         yRotationOf = pointOfRotation.y,
         radians = radians
     )
+}
+
+internal fun getParallelLines(
+    xStart: Double,
+    yStart: Double,
+    xFinish: Double,
+    yFinish: Double
+): Pair<Line, Line> {
+    TODO()
+}
+
+/*
+private fun getNextConvexPoint(points: List<Point>, point: Point, dAngle: Double): Pair<Point, Double> {
+    val size = points.size
+    if (size < 2) TODO()
+    return points.filter {
+        it != point
+    }.map {
+        it to calculateAngle(oldX = point.x, oldY = point.y, newX = it.x, newY = it.y)
+    }.minByOrNull { (_, angle) -> angle - dAngle }!!
+}
+*/
+
+private fun getNextConvexPoint(points: List<Point>, point: Point): Point {
+    val size = points.size
+    if (size < 2) TODO()
+    val list = points.filter { it != point }.map {
+        it to calculateAngle(oldX = point.x, oldY = point.y, newX = it.x, newY = it.y)
+    }
+//    println("$point " + list.joinToString { (p, a) -> "${p.x}/${p.y}/$a" })
+    val minAngle = list.minOfOrNull { (_, a) -> a }!!
+    val filtered = list.filter { (_, a) -> a == minAngle }
+    return filtered.minByOrNull { (p, _) ->
+        calculateDistance(pointStart = point, pointFinish = p)
+    }!!.first
+}
+
+internal fun getConvexHull(points: List<Point>): List<Point> {
+    val size = points.size
+    if (size < 3) TODO()
+    if (size == 3) return points
+    val sorted = points.sortedWith { p1, p2 ->
+        when {
+            p1.y > p2.y -> 1
+            p1.y < p2.y -> -1
+            p1.x > p2.x -> 1
+            p1.x < p2.x -> -1
+            else -> 0
+        }
+    }
+    val pointFirst = sorted.firstOrNull()!!
+    val result = mutableListOf<Point>()
+    result.add(pointFirst)
+    var pointCurrent = getNextConvexPoint(sorted, point = pointFirst)
+    result.add(pointCurrent)
+    var pointPrevious = pointFirst
+    var k = 0
+    while (true) {
+        val tmp = mutableMapOf<Double, MutableList<Point>>()
+        val angleOld = calculateAngle(oldX = pointCurrent.x, oldY = pointCurrent.y, newX = pointPrevious.x, newY = pointPrevious.y)
+        for (i in sorted.indices) {
+            val p = sorted[i]
+            if (p == pointPrevious) continue
+            if (p == pointCurrent) continue
+            val angle = calculateAngle(oldX = pointCurrent.x, oldY = pointCurrent.y, newX = p.x, newY = p.y)
+            val angleResult = (angle - angleOld).let {
+                if (it < 0) it + 360 else it
+            }
+            if (angleResult < 90) continue
+            tmp.getOrPut(angleResult, ::mutableListOf).add(p)
+        }
+        pointPrevious = pointCurrent
+        val (angle, list) = tmp.minByOrNull { (angle, _) -> angle }!!
+        pointCurrent = list.minByOrNull {
+            calculateDistance(pointStart = pointCurrent, pointFinish = it)
+        }!!
+//        println("prev ${pointPrevious.x.toInt()/25}/${pointPrevious.y.toInt()/25} curr ${pointCurrent.x.toInt()/25}/${pointCurrent.y.toInt()/25} a " + String.format("%.1f", angle))
+        if (pointCurrent == pointFirst) break
+        result.add(pointCurrent)
+        k++
+        if (k > 10) TODO()
+    }
+    return result
 }
