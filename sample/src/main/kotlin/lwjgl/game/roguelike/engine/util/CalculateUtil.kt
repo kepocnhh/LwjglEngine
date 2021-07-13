@@ -6,6 +6,7 @@ import lwjgl.game.roguelike.util.isLessThan
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.Line
+import lwjgl.wrapper.entity.line
 import lwjgl.wrapper.entity.update
 
 internal fun calculateDistance(
@@ -219,9 +220,63 @@ internal fun getParallelLines(
     xStart: Double,
     yStart: Double,
     xFinish: Double,
-    yFinish: Double
+    yFinish: Double,
+    distance: Double
 ): Pair<Line, Line> {
-    TODO()
+    if (xStart == xFinish) {
+        if (yStart == yFinish) TODO()
+        return line(
+            startX = xStart + distance,
+            finishX = xFinish + distance,
+            startY = yStart,
+            finishY = yFinish
+        ) to line(
+            startX = xStart - distance,
+            finishX = xFinish - distance,
+            startY = yStart,
+            finishY = yFinish
+        )
+    }
+    if (yStart == yFinish) {
+        return line(
+            startX = xStart,
+            finishX = xFinish,
+            startY = yStart + distance,
+            finishY = yFinish + distance
+        ) to line(
+            startX = xStart,
+            finishX = xFinish,
+            startY = yStart - distance,
+            finishY = yFinish - distance
+        )
+    }
+    val x1: Double
+    val x2: Double
+    val y1: Double
+    val y2: Double
+    if (xStart < xFinish) {
+        x1 = xStart
+        x2 = xFinish
+        y1 = yStart
+        y2 = yFinish
+    } else {
+        x1 = xFinish
+        x2 = xStart
+        y1 = yFinish
+        y2 = yStart
+    }
+    val angle = calculateAngle(oldX = x1, oldY = y1, newX = x2, newY = y2)
+    val angleResult = if (y1 > y2) {
+        - (90.0 - angle)
+    } else {
+        angle - 90.0
+    }
+    val radians1 = Math.toRadians(angleResult)
+    val resultStart1 = rotatePoint(x = x1, y = y1 + distance, xRotationOf = x1, yRotationOf = y1, radians = radians1)
+    val resultStart2 = rotatePoint(x = x1, y = y1 + distance, xRotationOf = x1, yRotationOf = y1, radians = Math.toRadians(angleResult + 180.0))
+    val resultFinish1 = rotatePoint(x = x2, y = y2 + distance, xRotationOf = x2, yRotationOf = y2, radians = radians1)
+    val resultFinish2 = rotatePoint(x = x2, y = y2 + distance, xRotationOf = x2, yRotationOf = y2, radians = Math.toRadians(angleResult + 180.0))
+    return line(resultStart1, resultFinish1) to line(resultStart2, resultFinish2)
 }
 
 /*
@@ -281,7 +336,7 @@ internal fun getConvexHull(points: List<Point>): List<Point> {
             val angleResult = (angle - angleOld).let {
                 if (it < 0) it + 360 else it
             }
-            if (angleResult < 90) continue
+            if (angleResult < 90) continue // todo 180 ?
             tmp.getOrPut(angleResult, ::mutableListOf).add(p)
         }
         pointPrevious = pointCurrent

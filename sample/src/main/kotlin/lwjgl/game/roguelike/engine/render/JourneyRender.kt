@@ -1,7 +1,9 @@
 package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
+import lwjgl.game.roguelike.engine.util.allLines
 import lwjgl.game.roguelike.engine.util.getConvexHull
+import lwjgl.game.roguelike.engine.util.getParallelLines
 import lwjgl.game.roguelike.engine.util.rotatePoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
@@ -144,15 +146,34 @@ class JourneyRender(
                 },
                 lineWidth = 1f
             )
+            val lines = region.allLines()
+            lines.forEach {
+                val (line1, line2) = getParallelLines(
+                    xStart = it.start.x, yStart = it.start.y, xFinish = it.finish.x, yFinish = it.finish.y,
+                    distance = 1 * pixelsPerUnit
+                )
+                canvas.drawLine(
+                    color = ColorEntity.CYAN,
+                    pointStart = line1.start.update(dX = dX, dY = dY),
+                    pointFinish = line1.finish.update(dX = dX, dY = dY),
+                    lineWidth = 1f,
+                )
+                canvas.drawLine(
+                    color = ColorEntity.WHITE,
+                    pointStart = line2.start.update(dX = dX, dY = dY),
+                    pointFinish = line2.finish.update(dX = dX, dY = dY),
+                    lineWidth = 1f,
+                )
+            }
 //            println("region " + region.color)
-            val convexHull = getConvexHull(region.points)
-            canvas.drawLineLoop(
-                color = ColorEntity.CYAN,
-                points = convexHull.map {
-                    it.update(dX = dX, dY = dY)
-                },
-                lineWidth = 1f
-            )
+//            val convexHull = getConvexHull(region.points)
+//            canvas.drawLineLoop(
+//                color = ColorEntity.CYAN,
+//                points = convexHull.map {
+//                    it.update(dX = dX, dY = dY)
+//                },
+//                lineWidth = 1f
+//            )
         }
         journey.territory.storages.forEach {
             canvas.drawRectangle(
