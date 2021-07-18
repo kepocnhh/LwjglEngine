@@ -2,8 +2,8 @@ package lwjgl.game.roguelike.engine.util
 
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.entity.Line
+import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.line
-import lwjgl.wrapper.entity.point
 
 private fun State.Journey.Territory.Storage.allLines(): List<Line> {
     val xStart = position.x - size.width / 2
@@ -40,7 +40,7 @@ internal fun State.Journey.Territory.allLines(): List<Line> {
     }
 }
 
-internal fun State.Journey.Territory.Region.allLines(): List<Line> {
+internal fun allLines(points: List<Point>): List<Line> {
     val result = mutableListOf<Line>()
     var i = 0
     val size = points.size
@@ -52,6 +52,23 @@ internal fun State.Journey.Territory.Region.allLines(): List<Line> {
         }
         result.add(line(start = points[i], finish = points[next]))
         i++
+    }
+    return result
+}
+
+internal fun State.Journey.Territory.Region.allLines(): List<Line> {
+    return allLines(points = points)
+}
+
+internal fun allPoints(lines: List<Line>): List<Point> {
+    val size = lines.size
+    if (size < 0) TODO()
+    if (size == 0) return emptyList()
+    if (size == 1) return lines.firstOrNull()!!.let { listOf(it.start, it.finish) }
+    val result = mutableListOf<Point>()
+    result.add(lines.firstOrNull()!!.start)
+    for (i in 1..lines.lastIndex) {
+        result.add(lines[i].start)
     }
     return result
 }

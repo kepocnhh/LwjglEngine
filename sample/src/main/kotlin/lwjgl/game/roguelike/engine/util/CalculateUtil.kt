@@ -1,6 +1,5 @@
 package lwjgl.game.roguelike.engine.util
 
-import java.util.LinkedList
 import kotlin.math.absoluteValue
 import lwjgl.game.roguelike.util.isLessThan
 import lwjgl.wrapper.entity.Point
@@ -216,6 +215,42 @@ internal fun rotatePoint(
     )
 }
 
+/**
+ * By vector!
+ */
+internal fun getParallelLine(
+    xStart: Double,
+    yStart: Double,
+    xFinish: Double,
+    yFinish: Double,
+    distance: Double
+): Line {
+    if (xStart == xFinish) {
+        if (yStart == yFinish) TODO()
+        val dX = if (yStart < yFinish) distance else - distance
+        return line(
+            startX = xStart + dX,
+            finishX = xFinish + dX,
+            startY = yStart,
+            finishY = yFinish
+        )
+    }
+    if (yStart == yFinish) {
+        val dY = if (xStart < xFinish) - distance else distance
+        return line(
+            startX = xStart,
+            finishX = xFinish,
+            startY = yStart + dY,
+            finishY = yFinish + dY
+        )
+    }
+    val angle = calculateAngle(oldX = xStart, oldY = yStart, newX = xFinish, newY = yFinish)
+    val radians = Math.toRadians(angle + 90.0)
+    return line(
+        start = rotatePoint(x = xStart, y = yStart + distance, xRotationOf = xStart, yRotationOf = yStart, radians = radians),
+        finish = rotatePoint(x = xFinish, y = yFinish + distance, xRotationOf = xFinish, yRotationOf = yFinish, radians = radians)
+    )
+}
 internal fun getParallelLines(
     xStart: Double,
     yStart: Double,
@@ -351,4 +386,62 @@ internal fun getConvexHull(points: List<Point>): List<Point> {
         if (k > 10) TODO()
     }
     return result
+}
+
+internal const val EPSILON_DEFAULT: Double = 0.00001
+internal fun Double.equals(other: Double, epsilon: Double): Boolean {
+    if (epsilon < 0.0 || epsilon >= 1.0) TODO()
+    return (this - other).absoluteValue < epsilon
+}
+
+internal fun isPointOnLine(point: Point, line: Line, epsilon: Double = EPSILON_DEFAULT): Boolean {
+    if (line.start.x.equals(line.finish.x, epsilon = epsilon)) {
+        if (line.start.y.equals(line.finish.y, epsilon = epsilon)) TODO()
+        return if (line.start.y < line.finish.y) {
+            point.x.equals(line.start.x, epsilon = epsilon) && point.y in line.start.y..line.finish.y
+        } else {
+            point.x.equals(line.start.x, epsilon = epsilon) && point.y in line.finish.y..line.start.y
+        }
+    }
+//    println("sy ${line.start.y} / fy ${line.finish.y}")
+    if (line.start.y.equals(line.finish.y, epsilon = epsilon)) {
+//        println("sy ${line.start.y} == fy ${line.finish.y}")
+        return if (line.start.x < line.finish.x) {
+//            println("lsx ${line.start.x} < lfx ${line.finish.x}")
+            point.y.equals(line.start.y, epsilon = epsilon) && point.x in line.start.x..line.finish.x
+        } else {
+//            println("lsx ${line.start.x} > lfx ${line.finish.x}")
+            point.y.equals(line.start.y, epsilon = epsilon) && point.x in line.finish.x..line.start.x
+        }
+    }
+    return ((point.x - line.start.x) / (line.finish.x - line.start.x) -
+            (point.y - line.start.y) / (line.finish.y - line.start.y)).equals(0.0, epsilon = epsilon)
+}
+
+internal fun isPointOnLineOld(point: Point, line: Line): Boolean {
+    if (line.start.x == line.finish.x) {
+        if (line.start.y == line.finish.y) TODO()
+        return if (line.start.y < line.finish.y) {
+            point.x == line.start.x && point.y in line.start.y..line.finish.y
+        } else {
+            point.x == line.start.x && point.y in line.finish.y..line.start.y
+        }
+    }
+    println("sy ${line.start.y} / fy ${line.finish.y}")
+    if (line.start.y == line.finish.y) {
+        println("sy ${line.start.y} == fy ${line.finish.y}")
+        return if (line.start.x < line.finish.x) {
+            println("lsx ${line.start.x} < lfx ${line.finish.x}")
+            point.y == line.start.y && point.x in line.start.x..line.finish.x
+        } else {
+            println("lsx ${line.start.x} > lfx ${line.finish.x}")
+            point.y == line.start.y && point.x in line.finish.x..line.start.x
+        }
+    }
+    return (point.x - line.start.x) / (line.finish.x - line.start.x) -
+            (point.y - line.start.y) / (line.finish.y - line.start.y) == 0.0
+}
+
+fun Point.equals(other: Point, epsilon: Double): Boolean {
+    return x.equals(other.x, epsilon = epsilon) && y.equals(other.y, epsilon = epsilon)
 }

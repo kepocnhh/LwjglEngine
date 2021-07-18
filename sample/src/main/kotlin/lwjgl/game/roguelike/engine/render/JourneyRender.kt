@@ -1,13 +1,18 @@
 package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
+import lwjgl.game.roguelike.engine.entity.Intelligence
 import lwjgl.game.roguelike.engine.util.allLines
 import lwjgl.game.roguelike.engine.util.getConvexHull
+import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
+import lwjgl.game.roguelike.engine.util.getParallelLine
 import lwjgl.game.roguelike.engine.util.getParallelLines
+import lwjgl.game.roguelike.engine.util.isPointOnLine
 import lwjgl.game.roguelike.engine.util.rotatePoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
+import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
 import lwjgl.wrapper.entity.update
@@ -147,23 +152,27 @@ class JourneyRender(
                 lineWidth = 1f
             )
             val lines = region.allLines()
-            lines.forEach {
-                val (line1, line2) = getParallelLines(
+//            val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width)
+            val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width) / 2.0
+            val p = lines.map {
+                getParallelLine(
                     xStart = it.start.x, yStart = it.start.y, xFinish = it.finish.x, yFinish = it.finish.y,
-                    distance = 1 * pixelsPerUnit
+                    distance = distance
                 )
-                canvas.drawLine(
-                    color = ColorEntity.CYAN,
-                    pointStart = line1.start.update(dX = dX, dY = dY),
-                    pointFinish = line1.finish.update(dX = dX, dY = dY),
-                    lineWidth = 1f,
-                )
-                canvas.drawLine(
-                    color = ColorEntity.WHITE,
-                    pointStart = line2.start.update(dX = dX, dY = dY),
-                    pointFinish = line2.finish.update(dX = dX, dY = dY),
-                    lineWidth = 1f,
-                )
+            }
+            for (i in p.indices) {
+                val it = p[i]
+                val next = if (i == p.lastIndex) 0 else i+1
+                val iPoint = getIntersectionPointOrNull(p1 = it.start, p2 = it.finish, line = p[next])
+                if (iPoint != null) {
+//                    canvas.drawPoint(color = ColorEntity.RED, point = iPoint.update(dX = dX, dY = dY))
+                }
+//                canvas.drawLine(
+//                    color = ColorEntity.CYAN,
+//                    pointStart = it.start.update(dX = dX, dY = dY),
+//                    pointFinish = it.finish.update(dX = dX, dY = dY),
+//                    lineWidth = 1f,
+//                )
             }
 //            println("region " + region.color)
 //            val convexHull = getConvexHull(region.points)
@@ -174,6 +183,33 @@ class JourneyRender(
 //                },
 //                lineWidth = 1f
 //            )
+            val dummy = journey.snapshot.dummy
+            val goalCurrent = dummy.intelligence.goalCurrent
+            if (goalCurrent is Intelligence.Goal.Move) {
+                val target = goalCurrent.target
+                p.let {
+                    val points = mutableListOf<Point>()
+                    for (i in it.indices) {
+                        val line = it[i]
+                        val n = if (i == it.lastIndex) 0 else i+1
+                        val iPoint = getIntersectionPointOrNull(p1 = line.start, p2 = line.finish, line = it[n])
+                        if (iPoint != null) {
+                            points.add(iPoint) // todo
+                        }
+                    }
+                    allLines(points)
+                }.forEach {
+                    val iPoint = getIntersectionPointOrNull(p1 = dummy.position, p2 = target.position, line = it)
+                    if (iPoint != null && isPointOnLine(iPoint, it)) {
+//                        canvas.drawRectangle(
+//                            color = ColorEntity.GREEN,
+//                            pointTopLeft = iPoint.update(dX = dX, dY = dY),
+//                            size = size(2, 2),
+//                            lineWidth = 1f
+//                        )
+                    }
+                }
+            }
         }
         journey.territory.storages.forEach {
             canvas.drawRectangle(
