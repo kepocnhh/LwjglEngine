@@ -47,7 +47,7 @@ fun point(
     )
 }
 
-fun Point.update(
+fun Point.updated(
     dX: Double,
     dY: Double
 ): Point {

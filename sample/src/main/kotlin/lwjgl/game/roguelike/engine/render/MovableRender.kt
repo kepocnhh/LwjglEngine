@@ -2,7 +2,11 @@ package lwjgl.game.roguelike.engine.render
 
 import lwjgl.game.roguelike.engine.entity.Movable
 import lwjgl.wrapper.canvas.Canvas
-import lwjgl.wrapper.entity.*
+import lwjgl.wrapper.entity.Color
+import lwjgl.wrapper.entity.ColorEntity
+import lwjgl.wrapper.entity.Size
+import lwjgl.wrapper.entity.point
+import lwjgl.wrapper.entity.updated
 
 class MovableRender(
     private val size: Size
@@ -14,8 +18,8 @@ class MovableRender(
         movable: Movable,
         color: Color
     ) {
-        val position = movable.position.update(dX = dX, dY = dY)
-        val relativePosition = position.update(dX = - size.width / 2, dY = - size.height /2)
+        val position = movable.position.updated(dX = dX, dY = dY)
+        val relativePosition = position.updated(dX = - size.width / 2, dY = - size.height /2)
         canvas.drawRectangle(
             color = color,
             pointTopLeft = relativePosition,

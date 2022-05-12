@@ -6,7 +6,7 @@ import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.Line
 import lwjgl.wrapper.entity.line
-import lwjgl.wrapper.entity.update
+import lwjgl.wrapper.entity.updated
 
 internal fun calculateDistance(
     xStart: Double,
@@ -108,10 +108,30 @@ internal fun getNewPositionByDirection(
     direction: Double
 ): Point {
     val radians = Math.toRadians(direction)
-    return oldPosition.update(
+    return oldPosition.updated(
         dX = units * kotlin.math.sin(radians),
         dY = - units * kotlin.math.cos(radians)
     )
+}
+
+/**
+ *     C
+ *    /\
+ *  a/  \b
+ *  /    \
+ * A------B
+ *     c
+ * @return angle C
+*/
+internal fun calculateAngle(
+    aX: Double, aY: Double,
+    bX: Double, bY: Double,
+    cX: Double, cY: Double
+): Double {
+    val a = calculateDistance(xStart = aX, yStart = aY, xFinish = cX, yFinish = cY)
+    val b = calculateDistance(xStart = bX, yStart = bY, xFinish = cX, yFinish = cY)
+    val c = calculateDistance(xStart = bX, yStart = bY, xFinish = aX, yFinish = aY)
+    return kotlin.math.acos((a * a + b * b + c * c) / (2 * a * b))
 }
 
 internal fun calculateAngle(oldX: Double, oldY: Double, newX: Double, newY: Double): Double {
@@ -389,33 +409,47 @@ internal fun getConvexHull(points: List<Point>): List<Point> {
 }
 
 internal const val EPSILON_DEFAULT: Double = 0.00001
-internal fun Double.equals(other: Double, epsilon: Double): Boolean {
+internal fun Double.isSame(other: Double, epsilon: Double): Boolean {
     if (epsilon < 0.0 || epsilon >= 1.0) TODO()
     return (this - other).absoluteValue < epsilon
 }
 
-internal fun isPointOnLine(point: Point, line: Line, epsilon: Double = EPSILON_DEFAULT): Boolean {
-    if (line.start.x.equals(line.finish.x, epsilon = epsilon)) {
-        if (line.start.y.equals(line.finish.y, epsilon = epsilon)) TODO()
-        return if (line.start.y < line.finish.y) {
-            point.x.equals(line.start.x, epsilon = epsilon) && point.y in line.start.y..line.finish.y
+internal fun isPointOnLine(
+    point: Point,
+    start: Point,
+    finish: Point,
+    epsilon: Double
+): Boolean {
+    if (start.x.isSame(finish.x, epsilon = epsilon)) {
+        if (start.y.isSame(finish.y, epsilon = epsilon)) TODO()
+        return if (start.y < finish.y) {
+            point.x.isSame(start.x, epsilon = epsilon) && point.y in start.y..finish.y
         } else {
-            point.x.equals(line.start.x, epsilon = epsilon) && point.y in line.finish.y..line.start.y
+            point.x.isSame(start.x, epsilon = epsilon) && point.y in finish.y..start.y
         }
     }
-//    println("sy ${line.start.y} / fy ${line.finish.y}")
-    if (line.start.y.equals(line.finish.y, epsilon = epsilon)) {
-//        println("sy ${line.start.y} == fy ${line.finish.y}")
-        return if (line.start.x < line.finish.x) {
-//            println("lsx ${line.start.x} < lfx ${line.finish.x}")
-            point.y.equals(line.start.y, epsilon = epsilon) && point.x in line.start.x..line.finish.x
+    if (start.y.isSame(finish.y, epsilon = epsilon)) {
+        return if (start.x < finish.x) {
+            point.y.isSame(start.y, epsilon = epsilon) && point.x in start.x..finish.x
         } else {
-//            println("lsx ${line.start.x} > lfx ${line.finish.x}")
-            point.y.equals(line.start.y, epsilon = epsilon) && point.x in line.finish.x..line.start.x
+            point.y.isSame(start.y, epsilon = epsilon) && point.x in finish.x..start.x
         }
     }
-    return ((point.x - line.start.x) / (line.finish.x - line.start.x) -
-            (point.y - line.start.y) / (line.finish.y - line.start.y)).equals(0.0, epsilon = epsilon)
+    if (point.x > kotlin.math.max(start.x, finish.x)) return false
+    if (point.x < kotlin.math.min(start.x, finish.x)) return false
+    if (point.y > kotlin.math.max(start.y, finish.y)) return false
+    if (point.y < kotlin.math.min(start.y, finish.y)) return false
+    return ((point.x - start.x) / (finish.x - start.x) -
+            (point.y - start.y) / (finish.y - start.y)).isSame(0.0, epsilon = epsilon)
+}
+
+internal fun isPointOnLine(point: Point, line: Line, epsilon: Double): Boolean {
+    return isPointOnLine(
+        point = point,
+        start = line.start,
+        finish = line.finish,
+        epsilon = epsilon
+    )
 }
 
 internal fun isPointOnLineOld(point: Point, line: Line): Boolean {
@@ -442,6 +476,124 @@ internal fun isPointOnLineOld(point: Point, line: Line): Boolean {
             (point.y - line.start.y) / (line.finish.y - line.start.y) == 0.0
 }
 
-fun Point.equals(other: Point, epsilon: Double): Boolean {
-    return x.equals(other.x, epsilon = epsilon) && y.equals(other.y, epsilon = epsilon)
+fun Point.isSame(other: Point, epsilon: Double): Boolean {
+    return x.isSame(other.x, epsilon = epsilon) && y.isSame(other.y, epsilon = epsilon)
+}
+
+fun <T : Any> getIndexPermutationsAll(list: Collection<T>): List<IntArray> {
+    return getIndexPermutationsAll(indices = list.indices.toSet().toIntArray(), exclude = intArrayOf())
+}
+
+private fun getIndexPermutationsAll(indices: IntArray, exclude: IntArray): List<IntArray> {
+    val result = mutableListOf<IntArray>()
+    for (i in indices) {
+        if (i in exclude) continue
+        val item = exclude + i
+        result.add(item)
+        result.addAll(getIndexPermutationsAll(indices = indices, exclude = item))
+    }
+    return result
+}
+
+private fun IntRange.toIntArray(): IntArray {
+    val result = IntArray(endInclusive - start + 1)
+    forEachIndexed { index, it ->
+        result[index] = it
+    }
+    return result
+}
+
+fun <T : Any> getIndexPermutations(list: Collection<T>): List<IntArray> {
+    return getIndexPermutations(indices = list.indices)
+}
+
+private fun getIndexPermutations(indices: IntRange): List<IntArray> {
+    val size = indices.last - indices.first + 1
+    val result: MutableList<IntArray> = ArrayList(size * size + (size - 1) * size)
+    val reversed: MutableList<IntArray> = ArrayList((size - 1) * size)
+    for (i in indices) {
+        result.add(intArrayOf(i))
+        for (j in (i + 1) until (size + i)) {
+            val item = result.last() + j % size
+            result.add(item)
+            reversed.add(item.reversedArray())
+        }
+    }
+    result.addAll(reversed)
+    return result
+}
+
+private fun getIndexPermutations(indices: IntArray): List<IntArray> {
+    val result = mutableListOf<IntArray>()
+    for (i in indices) {
+        var item = intArrayOf(i)
+        result.add(item)
+        for (j in (i + 1) until (indices.size + i)) {
+            item += j % indices.size
+            result.add(item)
+            result.add(item.reversedArray())
+        }
+    }
+    return result
+}
+
+private fun <K : Any> getPermutations(array: Array<Pair<K, IntArray>>): Array<Array<Pair<K, Int>>> {
+    val result = mutableListOf<Array<Pair<K, Int>>>()
+    for (iO in array.indices) {
+        val (thisKey, thisIndices) = array[iO]
+        for (thisIndex in thisIndices) {
+            result.add(arrayOf(thisKey to thisIndex))
+            var i = 0
+            while (i < array.size) {
+                if (i == iO) continue
+            }
+            for (i in array.indices) {
+                if (i == iO) continue
+                val (thatKey, thatIndices) = array[i]
+                val last = result.last()
+                for (thatIndex in thatIndices) {
+                    result.add(last + (thatKey to thatIndex))
+                }
+            }
+        }
+    }
+}
+
+fun Point.isEndpointOf(line: Line, epsilon: Double): Boolean {
+    return isSame(line.start, epsilon = epsilon) || isSame(line.finish, epsilon = epsilon)
+}
+
+fun Line.isIntersectedBetweenEndpoints(
+    other: Line,
+    epsilon: Double
+): Boolean {
+    return isIntersectedBetweenEndpoints(
+        startFirst = start,
+        finishFirst = finish,
+        startSecond = other.start,
+        finishSecond = other.finish,
+        epsilon = epsilon
+    )
+}
+
+fun isIntersectedBetweenEndpoints(
+    startFirst: Point,
+    finishFirst: Point,
+    startSecond: Point,
+    finishSecond: Point,
+    epsilon: Double
+): Boolean {
+//    val point = getIntersectionPointOrNull(p1 = startFirst, p2 = finishFirst, p3 = startSecond, p4 = finishSecond) ?: return false
+//    return isPointOnLine(point = point, start = startSecond, finish = finishSecond, epsilon = epsilon) && !(point.isSame(startSecond, epsilon = epsilon) || point.isSame(finishSecond, epsilon = epsilon))
+    val iPoint = getIntersectionPointOrNull(p1 = startFirst, p2 = finishFirst, p3 = startSecond, p4 = finishSecond)
+    if (iPoint == null) return false
+    val isPointOnLine = isPointOnLine(point = iPoint, start = startFirst, finish = finishFirst, epsilon = EPSILON_DEFAULT)
+    if (!isPointOnLine) return false
+    val isPointOnOtherLine = isPointOnLine(point = iPoint, start = startSecond, finish = finishSecond, epsilon = EPSILON_DEFAULT)
+    if (!isPointOnOtherLine) return false
+    if (iPoint.isSame(startFirst, epsilon = epsilon)) return false
+    if (iPoint.isSame(finishFirst, epsilon = epsilon)) return false
+    if (iPoint.isSame(startSecond, epsilon = epsilon)) return false
+    if (iPoint.isSame(finishSecond, epsilon = epsilon)) return false
+    return true
 }

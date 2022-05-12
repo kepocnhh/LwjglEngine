@@ -346,7 +346,8 @@ object Engine {
         var timeLogicLast = 0.0
         var timeRenderLast = 0.0
         loopWindow(
-            windowSize = WindowSize.Exact(size = size(width = 640, height = 480)),
+//            windowSize = WindowSize.Exact(size = size(width = 640, height = 480)),
+            windowSize = WindowSize.Exact(size = size(width = 640 * 2, height = 480 * 2)),
             title = "Engine",
             onKeyCallback = { _, key: Int, scanCode: Int, action: Int, _ ->
                 println("on -> key callback: $key $scanCode $action")

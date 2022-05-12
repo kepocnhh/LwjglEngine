@@ -2,20 +2,28 @@ package lwjgl.game.roguelike.engine.render
 
 import lwjgl.engine.common.EngineProperty
 import lwjgl.game.roguelike.engine.entity.Intelligence
+import lwjgl.game.roguelike.engine.util.EPSILON_DEFAULT
 import lwjgl.game.roguelike.engine.util.allLines
+import lwjgl.game.roguelike.engine.util.calculateDistance
 import lwjgl.game.roguelike.engine.util.getConvexHull
+import lwjgl.game.roguelike.engine.util.getIndexPermutations
+import lwjgl.game.roguelike.engine.util.getIndexPermutationsAll
 import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
 import lwjgl.game.roguelike.engine.util.getParallelLine
 import lwjgl.game.roguelike.engine.util.getParallelLines
+import lwjgl.game.roguelike.engine.util.getPath
+import lwjgl.game.roguelike.engine.util.isIntersectedBetweenEndpoints
 import lwjgl.game.roguelike.engine.util.isPointOnLine
+import lwjgl.game.roguelike.engine.util.isSame
 import lwjgl.game.roguelike.engine.util.rotatePoint
 import lwjgl.game.roguelike.state.State
 import lwjgl.wrapper.canvas.Canvas
 import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.Point
+import lwjgl.wrapper.entity.line
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
-import lwjgl.wrapper.entity.update
+import lwjgl.wrapper.entity.updated
 
 class JourneyRender(
     private val fullPathFont: String,
@@ -129,6 +137,184 @@ class JourneyRender(
     }
 */
 
+    private var time = System.currentTimeMillis()
+    private var index = 0
+
+    private fun onPermutations(
+        canvas: Canvas,
+        journey: State.Journey,
+        dX: Double,
+        dY: Double
+    ) {
+        val timeNow = System.currentTimeMillis()
+        val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width) / 2 // todo
+        val circumscribed = journey.territory.regions.filter { !it.isPassable }.associateWith {
+            allLines(getConvexHull(it.points)).map { line ->
+                getParallelLine(
+                    xStart = line.start.x, yStart = line.start.y, xFinish = line.finish.x, yFinish = line.finish.y,
+                    distance = distance
+                )
+            }.let { lines ->
+                val points = mutableListOf<Point>()
+                for (i in lines.indices) {
+                    val line = lines[i]
+                    val n = if (i == lines.lastIndex) 0 else i+1
+                    val iPoint = getIntersectionPointOrNull(p1 = line.start, p2 = line.finish, line = lines[n])
+                    if (iPoint != null) {
+                        points.add(iPoint) // todo
+                    }
+                }
+                points
+            }
+        }
+        val allPoints = circumscribed.flatMap { (_, points) -> points }
+        val goalCurrent = journey.snapshot.dummy.intelligence.goalCurrent ?: TODO()
+        check(goalCurrent is Intelligence.Goal.Move)
+        val pc = circumscribed.map { (region, points) ->
+            region to getIndexPermutations(points)
+        }
+        val pca = pc.map { (region, ll) ->
+            ll.map { l -> region to l }
+        }
+        val pa = getIndexPermutationsAll(pc)
+        val keys = circumscribed.keys.toList()
+//        val permutations = getIndexPermutationsAll(pc).map { indices ->
+//            val tmp = indices.flatMap { i ->
+//                pc[i].flatMap { ik -> ik.flatMap { circumscribed[keys[it]]!! } }
+//            }
+//            listOf(journey.snapshot.dummy.position) + tmp + goalCurrent.target.position
+//        }
+        val permutations = getIndexPermutations(allPoints).map { indices ->
+            listOf(journey.snapshot.dummy.position) + indices.map { allPoints[it] } + goalCurrent.target.position
+        }
+        if (timeNow - time > 500) {
+            time = System.currentTimeMillis()
+            index++
+            if (index > permutations.lastIndex) {
+                index = 0
+            }
+        }
+        val path = getPath(permutations[index])
+        for (i in path.indices) {
+            val linePath = path[i]
+            canvas.drawText(
+                fullPathFont = fullPathFont,
+                color = ColorEntity.WHITE,
+                text = "" + (i + 1),
+                pointTopLeft = linePath.finish.updated(dX = dX, dY = dY),
+                fontHeight = 16f
+            )
+            for (k in path.indices) {
+                if (k == i) continue
+                val lineOther = path[k]
+                val isIntersected = linePath.isIntersectedBetweenEndpoints(
+                    other = lineOther,
+                    epsilon = EPSILON_DEFAULT
+                )
+                if (isIntersected) {
+                    canvas.drawLine(
+                        color = ColorEntity.RED,
+                        pointStart = linePath.start.updated(dX = dX, dY = dY),
+                        pointFinish = linePath.finish.updated(dX = dX, dY = dY),
+                        lineWidth = 1f
+                    )
+                    canvas.drawLine(
+                        color = ColorEntity.YELLOW,
+                        pointStart = lineOther.start.updated(dX = dX, dY = dY),
+                        pointFinish = lineOther.finish.updated(dX = dX, dY = dY),
+                        lineWidth = 1f
+                    )
+                    canvas.drawText(
+                        fullPathFont = fullPathFont,
+                        color = ColorEntity.RED,
+                        text = "index: " + index + "/" + permutations.size,
+                        pointTopLeft = point(x = 50, y = 50),
+                        fontHeight = 16f
+                    )
+                    return
+                }
+            }
+            val regions = circumscribed.keys.toList()
+            for (j in regions.indices) {
+                val region = regions[j]
+                val ps = circumscribed[region]!!
+                for (k in ps.indices) {
+                    if (k == ps.lastIndex - 1) break
+                    val lineRegion = line(ps[k], ps[k + 2])
+                    val isIntersected = linePath.isIntersectedBetweenEndpoints(
+                        other = lineRegion,
+                        epsilon = EPSILON_DEFAULT
+                    )
+                    if (isIntersected) {
+                        canvas.drawLine(
+                            color = ColorEntity.RED,
+                            pointStart = linePath.start.updated(dX = dX, dY = dY),
+                            pointFinish = linePath.finish.updated(dX = dX, dY = dY),
+                            lineWidth = 1f
+                        )
+                        canvas.drawLine(
+                            color = ColorEntity.YELLOW,
+                            pointStart = lineRegion.start.updated(dX = dX, dY = dY),
+                            pointFinish = lineRegion.finish.updated(dX = dX, dY = dY),
+                            lineWidth = 1f
+                        )
+                        canvas.drawText(
+                            fullPathFont = fullPathFont,
+                            color = ColorEntity.RED,
+                            text = "index: " + index + "/" + permutations.size,
+                            pointTopLeft = point(x = 50, y = 50),
+                            fontHeight = 16f
+                        )
+                        return
+                    }
+                }
+                val rl = allLines(ps)
+                for (k in rl.indices) {
+                    val lineRegion = rl[k]
+                    val isIntersected = linePath.isIntersectedBetweenEndpoints(
+                        other = lineRegion,
+                        epsilon = EPSILON_DEFAULT
+                    )
+                    if (isIntersected) {
+                        canvas.drawLine(
+                            color = ColorEntity.RED,
+                            pointStart = linePath.start.updated(dX = dX, dY = dY),
+                            pointFinish = linePath.finish.updated(dX = dX, dY = dY),
+                            lineWidth = 1f
+                        )
+                        canvas.drawLine(
+                            color = ColorEntity.YELLOW,
+                            pointStart = lineRegion.start.updated(dX = dX, dY = dY),
+                            pointFinish = lineRegion.finish.updated(dX = dX, dY = dY),
+                            lineWidth = 1f
+                        )
+                        canvas.drawText(
+                            fullPathFont = fullPathFont,
+                            color = ColorEntity.RED,
+                            text = "index: " + index + "/" + permutations.size,
+                            pointTopLeft = point(x = 50, y = 50),
+                            fontHeight = 16f
+                        )
+                        return
+                    }
+                }
+            }
+            canvas.drawLine(
+                color = ColorEntity.GREEN,
+                pointStart = linePath.start.updated(dX = dX, dY = dY),
+                pointFinish = linePath.finish.updated(dX = dX, dY = dY),
+                lineWidth = 1f
+            )
+        }
+        canvas.drawText(
+            fullPathFont = fullPathFont,
+            color = ColorEntity.GREEN,
+            text = "index: " + index + "/" + permutations.size,
+            pointTopLeft = point(x = 50, y = 50),
+            fontHeight = 16f
+        )
+    }
+
     fun onRender(
         canvas: Canvas,
         journey: State.Journey,
@@ -147,81 +333,22 @@ class JourneyRender(
             canvas.drawLineLoop(
                 color = region.color,
                 points = region.points.map {
-                    it.update(dX = dX, dY = dY)
+                    it.updated(dX = dX, dY = dY)
                 },
                 lineWidth = 1f
             )
-            val lines = region.allLines()
-//            val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width)
-            val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width) / 2.0
-            val p = lines.map {
-                getParallelLine(
-                    xStart = it.start.x, yStart = it.start.y, xFinish = it.finish.x, yFinish = it.finish.y,
-                    distance = distance
-                )
-            }
-            for (i in p.indices) {
-                val it = p[i]
-                val next = if (i == p.lastIndex) 0 else i+1
-                val iPoint = getIntersectionPointOrNull(p1 = it.start, p2 = it.finish, line = p[next])
-                if (iPoint != null) {
-//                    canvas.drawPoint(color = ColorEntity.RED, point = iPoint.update(dX = dX, dY = dY))
-                }
-//                canvas.drawLine(
-//                    color = ColorEntity.CYAN,
-//                    pointStart = it.start.update(dX = dX, dY = dY),
-//                    pointFinish = it.finish.update(dX = dX, dY = dY),
-//                    lineWidth = 1f,
-//                )
-            }
-//            println("region " + region.color)
-//            val convexHull = getConvexHull(region.points)
-//            canvas.drawLineLoop(
-//                color = ColorEntity.CYAN,
-//                points = convexHull.map {
-//                    it.update(dX = dX, dY = dY)
-//                },
-//                lineWidth = 1f
-//            )
-            val dummy = journey.snapshot.dummy
-            val goalCurrent = dummy.intelligence.goalCurrent
-            if (goalCurrent is Intelligence.Goal.Move) {
-                val target = goalCurrent.target
-                p.let {
-                    val points = mutableListOf<Point>()
-                    for (i in it.indices) {
-                        val line = it[i]
-                        val n = if (i == it.lastIndex) 0 else i+1
-                        val iPoint = getIntersectionPointOrNull(p1 = line.start, p2 = line.finish, line = it[n])
-                        if (iPoint != null) {
-                            points.add(iPoint) // todo
-                        }
-                    }
-                    allLines(points)
-                }.forEach {
-                    val iPoint = getIntersectionPointOrNull(p1 = dummy.position, p2 = target.position, line = it)
-                    if (iPoint != null && isPointOnLine(iPoint, it)) {
-//                        canvas.drawRectangle(
-//                            color = ColorEntity.GREEN,
-//                            pointTopLeft = iPoint.update(dX = dX, dY = dY),
-//                            size = size(2, 2),
-//                            lineWidth = 1f
-//                        )
-                    }
-                }
-            }
         }
         journey.territory.storages.forEach {
             canvas.drawRectangle(
                 color = it.color,
-                pointTopLeft = it.position.update(
+                pointTopLeft = it.position.updated(
                     dX = dX - it.size.width / 2,
                     dY = dY - it.size.height /2
                 ),
                 size = it.size,
                 lineWidth = 2f,
                 direction = it.direction,
-                pointOfRotation = it.position.update(dX = dX, dY = dY)
+                pointOfRotation = it.position.updated(dX = dX, dY = dY)
             )
             val fontHeight = 14f
             canvas.drawByText(
@@ -230,7 +357,7 @@ class JourneyRender(
                 color = it.color,
                 text = "S"
             ) { width ->
-                it.position.update(dX = dX - width/2, dY = dY - fontHeight/2)
+                it.position.updated(dX = dX - width/2, dY = dY - fontHeight/2)
             }
         }
         movableRender.onRender(
@@ -240,6 +367,9 @@ class JourneyRender(
             movable = journey.snapshot.dummy,
             color = ColorEntity.BLUE
         )
+        //
+        onPermutations(canvas, journey, dX = dX, dY = dY)
+        //
         playerRender.onRender(
             canvas = canvas,
             player = journey.player,

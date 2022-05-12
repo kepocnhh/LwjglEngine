@@ -40,20 +40,17 @@ internal fun State.Journey.Territory.allLines(): List<Line> {
     }
 }
 
-internal fun allLines(points: List<Point>): List<Line> {
+internal fun getPath(points: List<Point>): List<Line> {
     val result = mutableListOf<Line>()
-    var i = 0
-    val size = points.size
-    while (true) {
-        val next: Int = when (i) {
-            size -> break
-            size - 1 -> 0
-            else -> i + 1
-        }
-        result.add(line(start = points[i], finish = points[next]))
-        i++
+    for (i in points.indices) {
+        if (i == points.lastIndex) break
+        result.add(line(start = points[i], finish = points[i + 1]))
     }
     return result
+}
+
+internal fun allLines(points: List<Point>): List<Line> {
+    return getPath(points) + line(start = points.last(), finish = points.first())
 }
 
 internal fun State.Journey.Territory.Region.allLines(): List<Line> {

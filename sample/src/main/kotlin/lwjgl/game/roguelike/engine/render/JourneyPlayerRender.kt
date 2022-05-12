@@ -10,7 +10,7 @@ import lwjgl.wrapper.entity.Size
 import lwjgl.wrapper.entity.color
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
-import lwjgl.wrapper.entity.update
+import lwjgl.wrapper.entity.updated
 
 class JourneyPlayerRender(
     private val fullPathFont: String,
@@ -87,7 +87,7 @@ class JourneyPlayerRender(
                         color = color,
                         text = "F"
                     ) { width ->
-                        point.update(dX = - width / 2, dY = - fontHeight / 2.0)
+                        point.updated(dX = - width / 2, dY = - fontHeight / 2.0)
                     }
                 }
             }
@@ -97,7 +97,7 @@ class JourneyPlayerRender(
                 val width = engineProperty.pictureSize.width / 2 - padding * 1.5
                 val height = engineProperty.pictureSize.height / 2
                 canvas.drawRectangle(
-                    color = ColorEntity.BLACK.update(alpha = 0.5f),
+                    color = ColorEntity.BLACK.updated(alpha = 0.5f),
                     pointTopLeft = point(x = 0.0, y = 0.0),
                     size = engineProperty.pictureSize
                 )

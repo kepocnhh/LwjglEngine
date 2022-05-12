@@ -55,7 +55,7 @@ fun color(
     )
 }
 
-fun Color.update(alpha: Float): Color {
+fun Color.updated(alpha: Float): Color {
     return color(
         red = red,
         green = green,

@@ -11,16 +11,19 @@ import lwjgl.game.roguelike.engine.entity.Intelligence
 import lwjgl.game.roguelike.engine.entity.Positionable
 import lwjgl.game.roguelike.engine.render.Render
 import lwjgl.game.roguelike.engine.util.EPSILON_DEFAULT
-import lwjgl.game.roguelike.engine.util.equals
+import lwjgl.game.roguelike.engine.util.isSame
 import lwjgl.game.roguelike.engine.util.allLines
 import lwjgl.game.roguelike.engine.util.allPoints
 import lwjgl.game.roguelike.engine.util.calculateAngle
 import lwjgl.game.roguelike.engine.util.calculateDistance
 import lwjgl.game.roguelike.engine.util.getConvexHull
+import lwjgl.game.roguelike.engine.util.getIndexPermutations
 import lwjgl.game.roguelike.engine.util.getIntersectionPointOrNull
 import lwjgl.game.roguelike.engine.util.getNewPositionByDirection
 import lwjgl.game.roguelike.engine.util.getParallelLine
+import lwjgl.game.roguelike.engine.util.getPath
 import lwjgl.game.roguelike.engine.util.getTriangleHeightPoint
+import lwjgl.game.roguelike.engine.util.isIntersectedBetweenEndpoints
 import lwjgl.game.roguelike.state.State
 import lwjgl.game.roguelike.util.TimeUnit
 import lwjgl.game.roguelike.util.isLessThan
@@ -35,6 +38,7 @@ import lwjgl.wrapper.entity.ColorEntity
 import lwjgl.wrapper.entity.Line
 import lwjgl.wrapper.entity.Point
 import lwjgl.wrapper.entity.Size
+import lwjgl.wrapper.entity.line
 import lwjgl.wrapper.entity.point
 import lwjgl.wrapper.entity.size
 
@@ -71,18 +75,40 @@ object RoguelikeEngineLogic : EngineLogic {
 //            color = ColorEntity.YELLOW,
 //            isPassable = false
 //        ),
+//        StateJourneyTerritoryRegion(
+//            points = rect(
+//                leftTop = point(x = 6 + 0, y = 6 + 0),
+//                rightBottom = point(x = 6 + 4, y = 6 + 4)
+//            ),
+//            color = ColorEntity.WHITE,
+//            isPassable = false
+//        ),
         StateJourneyTerritoryRegion(
-            points = rect(
-                leftTop = point(x = 6 + 0, y = 6 + 0),
-                rightBottom = point(x = 6 + 4, y = 6 + 4)
+            points = listOf(
+                point(x = 7 + 0, y = 7 + 0),
+                point(x = 7 + 3, y = 7 - 5),
+                point(x = 7 + 5, y = 7 - 5),
+//                point(x = 7 + 7, y = 7 + 0),
+                point(x = 7 + 5, y = 7 + 6),
+//                point(x = 7 + 2, y = 7 + 6),
             ),
             color = ColorEntity.WHITE,
             isPassable = false
         ),
+//        StateJourneyTerritoryRegion(
+//            points = listOf(
+//                point(x = 17 + 0, y = 9 + 0),
+//                point(x = 17 + 2, y = 9 - 3),
+//                point(x = 17 + 5, y = 9 + 1),
+//                point(x = 17 + 2, y = 9 + 3),
+//            ),
+//            color = ColorEntity.WHITE,
+//            isPassable = false
+//        ),
     )
     private val defaultTerritoryStorages: List<MutableStateJourneyTerritoryStorage> = listOf(
         MutableStateJourneyTerritoryStorage(
-            position = point(x = 4, y = 4),
+            position = point(x = 3, y = 7),
             size = size(width = 1, height = 1),
             direction = 0.0,
             color = ColorEntity.GREEN,
@@ -91,7 +117,7 @@ object RoguelikeEngineLogic : EngineLogic {
             }.toMutableList()
         ),
         MutableStateJourneyTerritoryStorage(
-            position = point(x = 15, y = 15),
+            position = point(x = 25, y = 7),
             size = size(width = 1, height = 1),
             direction = 0.0,
             color = ColorEntity.YELLOW,
@@ -924,7 +950,255 @@ object RoguelikeEngineLogic : EngineLogic {
             item.finish
         ).joinToString(prefix = "{", separator = "/", postfix = "}") { toString(it) }
     }
+
+    private fun isIntersected(index: Int, path: List<Line>): Boolean {
+        for (k in path.indices) {
+            if (k == index) continue
+            /*
+            val iPoint = getIntersectionPointOrNull(p1 = linePath.start, p2 = linePath.finish, line = lineOther)
+            if (iPoint == null) continue
+            canvas.drawRectangle(
+                color = ColorEntity.WHITE,
+                pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                size = size(2, 2)
+            )
+            val isPointOnLine = isPointOnLine(point = iPoint, start = linePath.start, finish = linePath.finish, epsilon = EPSILON_DEFAULT)
+            if (!isPointOnLine) continue
+            val isPointOnOtherLine = isPointOnLine(point = iPoint, start = lineOther.start, finish = lineOther.finish, epsilon = EPSILON_DEFAULT)
+            if (!isPointOnOtherLine) continue
+            canvas.drawRectangle(
+                color = ColorEntity.RED,
+                pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                size = size(3, 3)
+            )
+            if (iPoint.isSame(lineOther.start, epsilon = EPSILON_DEFAULT)) continue
+            if (iPoint.isSame(lineOther.finish, epsilon = EPSILON_DEFAULT)) continue
+            canvas.drawRectangle(
+                color = ColorEntity.YELLOW,
+                pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                size = size(4, 4)
+            )
+            */
+            val isIntersected = path[index].isIntersectedBetweenEndpoints(
+                other = path[k],
+                epsilon = EPSILON_DEFAULT
+            )
+            if (isIntersected) return true
+        }
+        return false
+    }
+
+    private fun isIntersected(path: List<Line>, circumscribed: Map<State.Journey.Territory.Region, List<Point>>): Boolean {
+        for (i in path.indices) {
+            val linePath = path[i]
+            if (isIntersected(index = i, path = path)) return true
+            val regions = circumscribed.keys.toList()
+            for (j in regions.indices) {
+                val region = regions[j]
+                val ps = circumscribed[region]!!
+                for (k in ps.indices) {
+                    if (k == ps.lastIndex - 1) break
+                    val isIntersected = linePath.isIntersectedBetweenEndpoints(
+                        other = line(ps[k], ps[k + 2]),
+                        epsilon = EPSILON_DEFAULT
+                    )
+                    if (isIntersected) return true
+                }
+                val rl = allLines(ps)
+                for (k in rl.indices) {
+                    val lineRegion = rl[k]
+                    /*
+                    val iPoint = getIntersectionPointOrNull(p1 = linePath.start, p2 = linePath.finish, line = lineRegion)
+                    if (iPoint == null) continue
+                    canvas.drawRectangle(
+                        color = ColorEntity.WHITE,
+                        pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                        size = size(2, 2)
+                    )
+                    val isPointOnLine = isPointOnLine(point = iPoint, start = lineRegion.start, finish = lineRegion.finish, epsilon = EPSILON_DEFAULT)
+                    if (!isPointOnLine) continue
+                    canvas.drawRectangle(
+                        color = ColorEntity.RED,
+                        pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                        size = size(3, 3)
+                    )
+                    if (iPoint.isSame(lineRegion.start, epsilon = EPSILON_DEFAULT)) continue
+                    if (iPoint.isSame(lineRegion.finish, epsilon = EPSILON_DEFAULT)) continue
+                    canvas.drawRectangle(
+                        color = ColorEntity.YELLOW,
+                        pointTopLeft = iPoint.updated(dX = dX, dY = dY),
+                        size = size(4, 4)
+                    )
+                    */
+                    val isIntersected = linePath.isIntersectedBetweenEndpoints(
+                        other = lineRegion,
+                        epsilon = EPSILON_DEFAULT
+                    )
+                    if (isIntersected) return true
+                }
+            }
+        }
+        return false
+    }
+
+    /**
+     *          ____
+     *        /  __ C\
+     *       / /  R \ \
+     * F ---I*-\_-_-/-*I--- S
+     *        \ ____ /
+     *
+     * R - filtered (regions)
+     * C - circumscribed (lines)
+     * I - intersections (points)
+    */
+    private fun onUpdateStateDummyPositionFoo(
+        dTime: Double,
+        territory: State.Journey.Territory,
+        dummy: MutableDummy,
+        targetExpected: Positionable
+    ) {
+        val velocityMultiple = 1.0 // todo
+        val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width) / 2 // todo
+        val filtered = territory.regions.filter { !it.isPassable }
+        val circumscribed = filtered.associateWith {
+            allLines(getConvexHull(it.points)).map { line ->
+                getParallelLine(
+                    xStart = line.start.x, yStart = line.start.y, xFinish = line.finish.x, yFinish = line.finish.y,
+                    distance = distance
+                )
+            }.let { lines ->
+                val points = mutableListOf<Point>()
+                for (i in lines.indices) {
+                    val line = lines[i]
+                    val n = if (i == lines.lastIndex) 0 else i+1
+                    val iPoint = getIntersectionPointOrNull(p1 = line.start, p2 = line.finish, line = lines[n])
+                    if (iPoint != null) {
+                        points.add(iPoint) // todo
+                    }
+                }
+                points
+            }
+        }
+        val intersections = circumscribed.mapNotNull { (region, points) ->
+            val lines = allLines(points).mapNotNull { line ->
+                getIntersectionPointOrNull(p1 = dummy.position, p2 = targetExpected.position, line = line)?.takeIf {
+                    isPointOnLine(it, line, epsilon = EPSILON_DEFAULT)
+                }?.let { line to it }
+            }
+            if (lines.isEmpty()) null else region to lines
+        }
+        if (intersections.isEmpty()) {
+            TODO()
+            return
+        }
+        // intersections is not empty
+        TODO()
+    }
+
     private fun onUpdateStateDummyPosition(
+        dTime: Double,
+        territory: State.Journey.Territory,
+        dummy: MutableDummy,
+        targetExpected: Positionable
+    ) {
+        val velocityMultiple = 1.0 // todo
+        val distance = kotlin.math.sqrt(playerSize.height * playerSize.height + playerSize.width * playerSize.width) / 2 // todo
+        val filtered = territory.regions.filter { !it.isPassable }
+        val circumscribed = filtered.associateWith {
+            allLines(getConvexHull(it.points)).map { line ->
+                getParallelLine(
+                    xStart = line.start.x, yStart = line.start.y, xFinish = line.finish.x, yFinish = line.finish.y,
+                    distance = distance
+                )
+            }.let { lines ->
+                val points = mutableListOf<Point>()
+                for (i in lines.indices) {
+                    val line = lines[i]
+                    val n = if (i == lines.lastIndex) 0 else i+1
+                    val iPoint = getIntersectionPointOrNull(p1 = line.start, p2 = line.finish, line = lines[n])
+                    if (iPoint != null) {
+                        points.add(iPoint) // todo
+                    }
+                }
+                points
+            }
+        }
+        val intersections = circumscribed.mapNotNull { (region, points) ->
+            val iPoints = allLines(points).mapNotNull { line ->
+                val point = getIntersectionPointOrNull(p1 = dummy.position, p2 = targetExpected.position, line = line)
+                if (point == null) null else {
+                    val isPointOnLine = isPointOnLine(point, line, epsilon = EPSILON_DEFAULT)
+                    if (isPointOnLine) point else null
+                }
+            }
+            if (iPoints.isEmpty()) null else {
+                region to iPoints
+            }
+        }
+        return // todo
+        if (intersections.isEmpty()) {
+            val newPosition = getNewPositionByDirection(
+                oldPosition = dummy.position,
+                units = dummy.velocity * velocityMultiple * dTime * pixelsPerUnit,
+                direction = dummy.directionExpected
+            )
+            dummy.position.x = newPosition.x
+            dummy.position.y = newPosition.y
+            dummy.directionExpected = calculateAngle(
+                oldX = dummy.position.x,
+                oldY = dummy.position.y,
+                newX = targetExpected.position.x,
+                newY = targetExpected.position.y
+            )
+            onUpdateStateDummyDirection(
+                dTime = dTime,
+                dummy = dummy
+            )
+            return // todo
+        }
+        // intersections is not empty
+        val allPoints = circumscribed.flatMap { (_, points) -> points }
+        val permutations = getIndexPermutations(allPoints).map { indices ->
+            listOf(dummy.position) + indices.map { allPoints[it] } + targetExpected.position
+        }
+        val passed = mutableListOf<List<Line>>()
+        for (points in permutations) {
+            val path = getPath(points)
+            val isIntersected = isIntersected(path = path, circumscribed = circumscribed)
+            if (!isIntersected) {
+                passed.add(path)
+            }
+        }
+        val path = passed.minByOrNull { list ->
+            list.sumOf { calculateDistance(it.start, it.finish) }
+        }
+        if (path == null) TODO()
+        if (path.isEmpty()) TODO()
+        val pointNext = path.firstOrNull()!!.finish
+        println("point next: " + toString(pointNext))
+        dummy.directionExpected = calculateAngle(
+            oldX = dummy.position.x,
+            oldY = dummy.position.y,
+            newX = pointNext.x,
+            newY = pointNext.y
+        )
+        val newPosition = getNewPositionByDirection(
+            oldPosition = dummy.position,
+            units = dummy.velocity * velocityMultiple * dTime * pixelsPerUnit,
+            direction = dummy.directionExpected
+        )
+        // todo check new position
+        dummy.position.x = newPosition.x
+        dummy.position.y = newPosition.y
+        onUpdateStateDummyDirection(
+            dTime = dTime,
+            dummy = dummy
+        )
+    }
+
+    @Deprecated(message = "onUpdateStateDummyPosition")
+    private fun onUpdateStateDummyPositionOld2(
         dTime: Double,
         territory: State.Journey.Territory,
         dummy: MutableDummy,
@@ -957,7 +1231,7 @@ object RoguelikeEngineLogic : EngineLogic {
             val iPoints = lines.mapNotNull { line ->
                 val point = getIntersectionPointOrNull(p1 = dummy.position, p2 = targetExpected.position, line = line)
                 if (point == null) null else {
-                    val isPointOnLine = isPointOnLine(point, line)
+                    val isPointOnLine = isPointOnLine(point, line, epsilon = EPSILON_DEFAULT)
 //                    println("line $line point $point $isPointOnLine")
                     if (isPointOnLine) point else null
                 }
@@ -988,6 +1262,7 @@ object RoguelikeEngineLogic : EngineLogic {
         } else {
 //            println("intersections $intersections") // todo
         }
+        // intersections is not empty
         val (region, points) = intersections.minByOrNull { (_, points) ->
             points.minOfOrNull {
                 calculateDistance(pointStart = dummy.position, pointFinish = it)
@@ -1003,12 +1278,12 @@ object RoguelikeEngineLogic : EngineLogic {
             val iRegion = lines.mapNotNull { line ->
                 val iPoint = getIntersectionPointOrNull(p1 = dummy.position, p2 = point, line = line)
                 if (iPoint != null) {
-                    val ipol = isPointOnLine(iPoint, line)
+//                    val ipol = isPointOnLine(iPoint, line)
 //                    println("${toString(point)}-${toString(dummy.position)} ${toString(line)} i ${toString(iPoint)} $ipol")
                 }
                 if (iPoint == null) null
-                else if (iPoint.equals(point, epsilon = EPSILON_DEFAULT)) null
-                else if (!isPointOnLine(iPoint, line)) null
+                else if (iPoint.isSame(point, epsilon = EPSILON_DEFAULT)) null
+                else if (!isPointOnLine(iPoint, line, epsilon = EPSILON_DEFAULT)) null
                 else iPoint
             }
             if (iRegion.isNotEmpty()) {
@@ -1020,12 +1295,12 @@ object RoguelikeEngineLogic : EngineLogic {
             val iTarget = lines.mapNotNull { line ->
                 val iPoint = getIntersectionPointOrNull(p1 = point, p2 = targetExpected.position, line = line)
                 if (iPoint != null) {
-                    val ipol = isPointOnLine(iPoint, line)
+//                    val ipol = isPointOnLine(iPoint, line)
 //                    println("${toString(line)} i ${toString(iPoint)}, $ipol")
                 }
                 if (iPoint == null) null
-                else if (iPoint.equals(point, epsilon = EPSILON_DEFAULT)) null
-                else if (!isPointOnLine(iPoint, line)) null
+                else if (iPoint.isSame(point, epsilon = EPSILON_DEFAULT)) null
+                else if (!isPointOnLine(iPoint, line, epsilon = EPSILON_DEFAULT)) null
                 else iPoint
             }
             if (iTarget.isEmpty()) {
@@ -1219,6 +1494,7 @@ object RoguelikeEngineLogic : EngineLogic {
             }
         }
     }
+
     private fun onUpdateStateJourneySnapshot(
         dTime: Double,
         territory: State.Journey.Territory,
